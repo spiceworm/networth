@@ -15,8 +15,8 @@ class BullionAsset(Asset):
             resp.raise_for_status()
             retval = resp.json()
             merge_dicts = lambda a, b: {**a, **b}
-            BullionAsset._PRICES = functools.reduce(merge_dicts, retval)[self.LABEL]
-        return BullionAsset._PRICES
+            BullionAsset._PRICES = functools.reduce(merge_dicts, retval)
+        return BullionAsset._PRICES[self.LABEL]
 
 
 class Gold(BullionAsset):
