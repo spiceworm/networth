@@ -17,11 +17,14 @@ __all__ = [
     'Cardano',
     'CRYPTO',
     'Chainlink',
+    'Decentraland',
     'DYDX',
     'Ergo',
     'Ethereum',
     'Fantom',
     'GeminiDollar',
+    'Illuvium',
+    'LoopRing',
     'Polygon',
     'Rari',
     'RocketPool',
@@ -133,6 +136,12 @@ class Chainlink(CryptoAsset):
     SYMBOL = 'LINK'
 
 
+class Decentraland(CryptoAsset):
+    CONTRACT_ADDRESS = '0x0f5d2fb29fb7d3cfee444a200298f468908cc942'
+    LABEL = 'decentraland'
+    SYMBOL = 'MANA'
+
+
 class DYDX(CryptoAsset):
     CONTRACT_ADDRESS = '0x92d6c1e31e14520e676a687f0a93788b716beff5'
     LABEL = 'dydx'
@@ -166,6 +175,18 @@ class GeminiDollar(CryptoAsset):
     CONTRACT_ADDRESS = '0x056fd409e1d7a124bd7017459dfea2f387b6d5cd'
     LABEL = 'gemini-dollar'
     SYMBOL = 'GUSD'
+
+
+class Illuvium(CryptoAsset):
+    CONTRACT_ADDRESS = '0x767fe9edc9e0df98e07454847909b5e959d7ca0e'
+    LABEL = 'illuvium'
+    SYMBOL = 'ILV'
+
+
+class LoopRing(CryptoAsset):
+    CONTRACT_ADDRESS = '0xbbbbca6a901c926f240b89eacb641d8aec7aeafd'
+    LABEL = 'loopring'
+    SYMBOL = 'LRC'
 
 
 class Polygon(CryptoAsset):
@@ -234,11 +255,14 @@ CRYPTO = [
     Bitcoin,
     Cardano,
     Chainlink,
+    Decentraland,
     DYDX,
     Ergo,
     Ethereum,
     Fantom,
     GeminiDollar,
+    Illuvium,
+    LoopRing,
     Polygon,
     Rari,
     RocketPool,
