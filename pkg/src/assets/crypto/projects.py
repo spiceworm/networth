@@ -83,14 +83,14 @@ class EthereumAsset(CryptoAsset):
 
     @property
     def quantity(self):
-        # If assets.yaml defines any `self.addresses` for the current token and if we have not already performed
-        # token balance lookup for the set of `self.addresses` defined in assets.yaml for that token.
-        if self.addresses and self.CONTRACT_ADDRESS not in EthereumAsset._TOKEN_BALANCES_BY_ADDRESS:
-            EthereumAsset._TOKEN_BALANCES_BY_ADDRESS[self.CONTRACT_ADDRESS][self.SYMBOL] = sum(
+        # If assets.yaml defines any `self.addresses` for the current token.
+        if self.addresses:
+            blockchain_bal = sum(
                 EtherScan().get_token_balance(addr, self.CONTRACT_ADDRESS)
                 for addr in self.addresses
             )
-        blockchain_bal = EthereumAsset._TOKEN_BALANCES_BY_ADDRESS[self.CONTRACT_ADDRESS].get(self.SYMBOL, 0)
+        else:
+            blockchain_bal = 0
 
         return sum([
             super().quantity,
