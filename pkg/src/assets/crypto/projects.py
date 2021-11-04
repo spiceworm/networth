@@ -1,3 +1,5 @@
+import collections
+
 import pycoingecko
 
 from .apis import (
@@ -39,6 +41,7 @@ __all__ = [
 
 class CryptoAsset(Asset):
     _PRICES = None
+    _TOKEN_BALANCES_BY_ADDRESS = collections.defaultdict(dict)
 
     def __init__(self, balances_or_addresses=()):
         balances = [bal for bal in balances_or_addresses if not isinstance(bal, str)]
@@ -47,6 +50,7 @@ class CryptoAsset(Asset):
 
     @property
     def price(self):
+        # If we have not already populated `CryptoAsset._PRICES` with the prices for all asset classes.
         if CryptoAsset._PRICES is None:
             api = pycoingecko.CoinGeckoAPI()
             CryptoAsset._PRICES = api.get_price(ids=self.get_subclass_labels(), vs_currencies='usd')
@@ -68,11 +72,16 @@ class CryptoAsset(Asset):
         hardcoded_bal = self._quantity
 
         blockchain_bal = 0
-        if hasattr(self, 'CONTRACT_ADDRESS'):
-            blockchain_bal = sum(
-                EtherScan().get_token_balance(addr, self.CONTRACT_ADDRESS)
-                for addr in self.addresses
-            )
+        # If we are currently looking at a token class and assets.yaml defines any
+        # addresses for that token
+        if hasattr(self, 'CONTRACT_ADDRESS') and self.addresses:
+            # If we have not already performed token balance lookup for the current set of addresses.
+            if self.CONTRACT_ADDRESS not in CryptoAsset._TOKEN_BALANCES_BY_ADDRESS:
+                CryptoAsset._TOKEN_BALANCES_BY_ADDRESS[self.CONTRACT_ADDRESS][self.SYMBOL] = sum(
+                    EtherScan().get_token_balance(addr, self.CONTRACT_ADDRESS)
+                    for addr in self.addresses
+                )
+            blockchain_bal = CryptoAsset._TOKEN_BALANCES_BY_ADDRESS[self.CONTRACT_ADDRESS][self.SYMBOL]
 
         return sum([
             blockchain_bal,
@@ -160,7 +169,7 @@ class Ethereum(CryptoAsset):
 
     @property
     def quantity(self):
-        qty = super(Ethereum, self).quantity
+        qty = super().quantity
         qty += EtherScan().get_ether_balances(*self.addresses, return_sum=True)
         return qty
 
