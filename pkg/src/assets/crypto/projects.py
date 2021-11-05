@@ -1,5 +1,3 @@
-import collections
-
 import pycoingecko
 
 from .apis import (
@@ -40,8 +38,6 @@ __all__ = [
 
 
 class CryptoAsset(Asset):
-    _TOKEN_BALANCES_BY_ADDRESS = collections.defaultdict(dict)
-
     def __init__(self, balances_or_addresses=()):
         balances = [bal for bal in balances_or_addresses if not isinstance(bal, str)]
         self.addresses = [addr for addr in balances_or_addresses if isinstance(addr, str)]
@@ -79,7 +75,6 @@ class CryptoAsset(Asset):
 
 class EthereumAsset(CryptoAsset):
     CONTRACT_ADDRESS = None
-    _TOKEN_BALANCES_BY_ADDRESS = collections.defaultdict(dict)
 
     @property
     def quantity(self):
@@ -161,9 +156,7 @@ class Ethereum(CryptoAsset):
 
     @property
     def quantity(self):
-        qty = super().quantity
-        qty += EtherScan().get_ether_balances(*self.addresses, return_sum=True)
-        return qty
+        return super().quantity + EtherScan().get_ether_balances(*self.addresses, return_sum=True)
 
 
 class Fantom(EthereumAsset):
