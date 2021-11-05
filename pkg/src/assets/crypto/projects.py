@@ -11,12 +11,14 @@ from .. import Asset
 __all__ = [
     'Aave',
     'AdventureGold',
+    'Alchemix',
     'Algorand',
     'AxieInfinity',
     'Bitcoin',
     'Cardano',
     'CRYPTO',
     'Chainlink',
+    'CryptoDotCom',
     'Decentraland',
     'DYDX',
     'Ergo',
@@ -105,6 +107,12 @@ class AdventureGold(EthereumAsset):
     SYMBOL = 'AGLD'
 
 
+class Alchemix(EthereumAsset):
+    CONTRACT_ADDRESS = '0xdbdb4d16eda451d0503b854cf79d55697f90c8df'
+    LABEL = 'alchemix'
+    SYMBOL = 'ALCX'
+
+
 class Algorand(CryptoAsset):
     LABEL = 'algorand'
     SYMBOL = 'ALGO'
@@ -130,6 +138,12 @@ class Chainlink(EthereumAsset):
     CONTRACT_ADDRESS = '0x514910771af9ca656af840dff83e8264ecf986ca'
     LABEL = 'chainlink'
     SYMBOL = 'LINK'
+
+
+class CryptoDotCom(EthereumAsset):
+    CONTRACT_ADDRESS = '0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b'
+    LABEL = 'crypto-com-chain'
+    SYMBOL = 'CRO'
 
 
 class Decentraland(EthereumAsset):
@@ -243,12 +257,14 @@ class USDC(EthereumAsset):
 
 CRYPTO = [
     Aave,
-    Algorand,
     AdventureGold,
+    Alchemix,
+    Algorand,
     AxieInfinity,
     Bitcoin,
     Cardano,
     Chainlink,
+    CryptoDotCom,
     Decentraland,
     DYDX,
     Ergo,
