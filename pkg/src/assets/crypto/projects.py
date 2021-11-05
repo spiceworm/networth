@@ -26,6 +26,7 @@ __all__ = [
     'Fantom',
     'GeminiDollar',
     'Illuvium',
+    'ImmutableX',
     'LoopRing',
     'Polygon',
     'Rari',
@@ -191,6 +192,12 @@ class Illuvium(EthereumAsset):
     SYMBOL = 'ILV'
 
 
+class ImmutableX(EthereumAsset):
+    CONTRACT_ADDRESS = '0xf57e7e7c23978c3caec3c3548e3d615c346e79ff'
+    LABEL = 'immutable-x'
+    SYMBOL = 'IMX'
+
+
 class LoopRing(EthereumAsset):
     CONTRACT_ADDRESS = '0xbbbbca6a901c926f240b89eacb641d8aec7aeafd'
     LABEL = 'loopring'
@@ -272,6 +279,7 @@ CRYPTO = [
     Fantom,
     GeminiDollar,
     Illuvium,
+    ImmutableX,
     LoopRing,
     Polygon,
     Rari,
