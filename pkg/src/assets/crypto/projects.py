@@ -21,6 +21,7 @@ __all__ = [
     'CryptoDotCom',
     'Decentraland',
     'DYDX',
+    'ENS',
     'Ergo',
     'Ethereum',
     'Fantom',
@@ -159,6 +160,12 @@ class DYDX(EthereumAsset):
     SYMBOL = 'DYDX'
 
 
+class ENS(EthereumAsset):
+    CONTRACT_ADDRESS = '0xc18360217d8f7ab5e7c516566761ea12ce7f9d72'
+    LABEL = 'ethereum-name-service'
+    SYMBOL = 'ENS'
+
+
 class Ergo(CryptoAsset):
     LABEL = 'ergo'
     SYMBOL = 'ERG'
@@ -274,6 +281,7 @@ CRYPTO = [
     CryptoDotCom,
     Decentraland,
     DYDX,
+    ENS,
     Ergo,
     Ethereum,
     Fantom,
