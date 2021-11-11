@@ -39,7 +39,7 @@ def main(discreet, update_assets, no_fetch):
                 continue
 
             asset_value = 'X' if discreet else f'{asset.value:<15,.2f}'
-            portfolio_allocation = f'{asset.value / total_value * 100:.2f}'
+            portfolio_allocation = f'{asset.value / total_value * 100:.4f}'
             asset_quantity = 'X' if discreet else f'{asset.quantity:,}'
             msg = (
                 f'{asset.SYMBOL:>13}: ${asset_value} ({portfolio_allocation}%) '
