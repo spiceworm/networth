@@ -19,9 +19,14 @@ class MerrillLynch(InstitutionalAsset):
     SYMBOL = 'Merrill Lynch'
 
 
+class RealEstate(InstitutionalAsset):
+    LABEL = 'real-estate'
+    SYMBOL = 'Real Estate'
+
+
 class UMCU(InstitutionalAsset):
     LABEL = 'umcu'
     SYMBOL = 'UMCU'
 
 
-INSTITUTIONS = [Fidelity, MerrillLynch, UMCU]
+INSTITUTIONS = [Fidelity, MerrillLynch, RealEstate, UMCU]
