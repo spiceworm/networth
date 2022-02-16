@@ -7,6 +7,7 @@ import yaml
 
 from src.assets.bullion import BULLION
 from src.assets.crypto import CRYPTO
+from src.assets.fiat import FIAT
 from src.assets.institution import INSTITUTIONS
 
 
@@ -25,13 +26,14 @@ def main(discreet, update_assets, no_fetch):
 
     bullion = [CLS(assets['bullion'].get(CLS.LABEL, ())) for CLS in BULLION]
     crypto = [CLS(assets['crypto'].get(CLS.LABEL, ())) for CLS in CRYPTO]
+    fiat = [CLS(assets['fiat'].get(CLS.LABEL, ())) for CLS in FIAT]
     institutions = [CLS(assets['institutions'].get(CLS.LABEL, ())) for CLS in INSTITUTIONS]
-    assets = [*bullion, *crypto, *institutions]
+    assets = [*bullion, *crypto, *fiat, *institutions]
     total_value = sum(asset.value for asset in assets)
 
     column_count = int(subprocess.check_output(['stty', 'size']).split()[1])
 
-    for asset_group in (bullion, crypto, institutions):
+    for asset_group in (bullion, crypto, fiat, institutions):
         click.echo('-' * column_count)
 
         for asset in sorted(asset_group, key=operator.attrgetter('value')):
