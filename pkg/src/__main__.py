@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import logging
-import operator
 import os
 
 import click
@@ -55,7 +54,7 @@ def main(discreet, update_assets, verbose, no_fetch):
     for asset_objs in (bullion, crypto, fiat, institutions):
         click.echo('-' * terminal_size.columns)
 
-        for asset in sorted(asset_objs, key=operator.attrgetter('value')):
+        for asset in sorted(asset_objs):
             if asset.value == 0:
                 continue
 

@@ -1,14 +1,19 @@
+from __future__ import annotations
+
+import functools
 import logging
+from typing import List
 
 
 log = logging.getLogger()
 
 
+@functools.total_ordering
 class Asset:
     SYMBOL = None
     LABEL = None
 
-    def __init__(self, quantities=()):
+    def __init__(self, quantities: List[float, int] = ()):
         if quantities:
             log.debug('Hardcoded quantities for %s:', self.__class__.__name__)
             for qty in quantities:
@@ -17,6 +22,12 @@ class Asset:
         self._quantity = sum(quantities)
         self._price = None
         self._value = None
+
+    def __eq__(self, other: Asset) -> bool:
+        return self.value == other.value
+
+    def __lt__(self, other: Asset) -> bool:
+        return self.value < other.value
 
     @property
     def price(self):

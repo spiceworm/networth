@@ -2,10 +2,12 @@ from .. import Asset
 
 
 class InstitutionalAsset(Asset):
+    def __init__(self, quantities):
+        super().__init__(quantities)
+        self._price = 1
+
     @property
     def price(self):
-        if self._price is None:
-            self._price = 1
         return self._price
 
 
