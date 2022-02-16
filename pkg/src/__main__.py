@@ -30,7 +30,7 @@ log.setLevel(logging.INFO)
 @click.option('-u', '--update-assets', is_flag=True)
 @click.option('-v', '--verbose', is_flag=True)
 @click.option('-z', '--no-fetch', is_flag=True)
-def main(discreet, update_assets, verbose, no_fetch):
+def main(discreet, update_assets, verbose, no_fetch) -> None:
     if update_assets:
         click.edit(editor='vim', filename='assets.yaml')
     if no_fetch:

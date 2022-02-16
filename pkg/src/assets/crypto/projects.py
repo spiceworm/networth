@@ -1,4 +1,5 @@
 import logging
+from typing import Iterable, Union
 
 import pycoingecko
 
@@ -47,7 +48,7 @@ log = logging.getLogger()
 
 
 class CryptoAsset(Asset):
-    def __init__(self, balances_or_addresses=()):
+    def __init__(self, balances_or_addresses: Iterable[Union[float, int, str]] = ()):
         balances = [bal for bal in balances_or_addresses if not isinstance(bal, str)]
         self.addresses = [addr for addr in balances_or_addresses if isinstance(addr, str)]
 
@@ -59,7 +60,7 @@ class CryptoAsset(Asset):
         super().__init__(balances)
 
     @property
-    def price(self):
+    def price(self) -> float:
         if self._price is None:
             api = pycoingecko.CoinGeckoAPI()
             retval = api.get_price(ids=self.LABEL, vs_currencies='usd')
@@ -67,7 +68,7 @@ class CryptoAsset(Asset):
         return self._price
 
     @property
-    def quantity(self):
+    def quantity(self) -> float:
         coinbase = Coinbase()
         gemini = Gemini()
 
@@ -91,7 +92,7 @@ class EthereumAsset(CryptoAsset):
     CONTRACT_ADDRESS = None
 
     @property
-    def quantity(self):
+    def quantity(self) -> float:
         # If assets.yaml defines any `self.addresses` for the current token.
         if self.addresses:
             blockchain_bal = sum(
@@ -187,7 +188,7 @@ class Ethereum(CryptoAsset):
     SYMBOL_ALIASES = ('ETH2',)
 
     @property
-    def quantity(self):
+    def quantity(self) -> float:
         return super().quantity + EtherScan().get_ether_balances(*self.addresses, return_sum=True)
 
 

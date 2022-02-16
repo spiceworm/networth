@@ -9,7 +9,7 @@ class BullionAsset(Asset):
     _PRICES = None
 
     @property
-    def price(self):
+    def price(self) -> float:
         if BullionAsset._PRICES is None:
             resp = requests.get('https://api.metals.live/v1/spot')
             resp.raise_for_status()

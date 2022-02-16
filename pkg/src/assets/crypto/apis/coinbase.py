@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import os
 import time
+from typing import Union
 
 import requests
 from requests.auth import AuthBase
@@ -13,7 +14,7 @@ class _CoinbaseWalletAuth(AuthBase):
         self.api_key = api_key
         self.secret_key = secret_key
 
-    def __call__(self, request):
+    def __call__(self, request) -> requests.Response:
         timestamp = int(time.time())
         message = f'{timestamp}{request.method}{request.path_url}{request.body or ""}'
         signature = hmac.new(self.secret_key.encode(), message.encode(), hashlib.sha256).hexdigest()
@@ -35,13 +36,13 @@ class Coinbase:
         api_secret = os.environ['COINBASE_API_SECRET']
         self.auth = _CoinbaseWalletAuth(api_key, api_secret)
 
-    def get_balance(self, symbol):
+    def get_balance(self, symbol) -> Union[float, int]:
         if Coinbase.BALANCES is None:
             Coinbase.BALANCES = {}
             self._fetch_balances()
         return Coinbase.BALANCES.get(symbol, 0)
 
-    def _fetch_balances(self, next_uri=''):
+    def _fetch_balances(self, next_uri='') -> None:
         resp = requests.get(self.API_URL + (next_uri or '/v2/accounts'), auth=self.auth)
         resp.raise_for_status()
         retval = resp.json()

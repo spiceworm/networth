@@ -10,8 +10,8 @@ class USD(FiatAsset):
     SYMBOL = 'USD'
 
     @property
-    def price(self):
-        return 1
+    def price(self) -> float:
+        return 1.0
 
 
 FIAT = [USD]

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import List
+from typing import Iterable, Union
 
 
 log = logging.getLogger()
@@ -13,7 +13,7 @@ class Asset:
     SYMBOL = None
     LABEL = None
 
-    def __init__(self, quantities: List[float, int] = ()):
+    def __init__(self, quantities: Iterable[Union[float, int]] = ()):
         if quantities:
             log.debug('Hardcoded quantities for %s:', self.__class__.__name__)
             for qty in quantities:
@@ -30,15 +30,15 @@ class Asset:
         return self.value < other.value
 
     @property
-    def price(self):
+    def price(self) -> float:
         raise NotImplemented
 
     @property
-    def quantity(self):
+    def quantity(self) -> float:
         return self._quantity
 
     @property
-    def value(self):
+    def value(self) -> float:
         if self._value is None:
             self._value = float(self.price) * self.quantity
         return self._value
