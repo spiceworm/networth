@@ -1,4 +1,4 @@
-FROM python:3.9.6
+FROM python:3.10.2
 
 WORKDIR /app
 
@@ -10,6 +10,6 @@ RUN pip install --upgrade pip
 
 COPY pkg/ /app/
 
-RUN pip install . --use-feature=in-tree-build
+RUN pip install .
 
 ENTRYPOINT ["networth"]
