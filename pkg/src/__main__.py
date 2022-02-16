@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import logging
 import operator
-import subprocess
+import os
 
 import click
 import yaml
@@ -46,15 +46,16 @@ def main(discreet, update_assets, verbose, no_fetch):
     crypto = [CLS(assets['crypto'].get(CLS.LABEL, ())) for CLS in CRYPTO]
     fiat = [CLS(assets['fiat'].get(CLS.LABEL, ())) for CLS in FIAT]
     institutions = [CLS(assets['institutions'].get(CLS.LABEL, ())) for CLS in INSTITUTIONS]
+
     assets = [*bullion, *crypto, *fiat, *institutions]
     total_value = sum(asset.value for asset in assets)
 
-    column_count = int(subprocess.check_output(['stty', 'size']).split()[1])
+    terminal_size = os.get_terminal_size()
 
-    for asset_group in (bullion, crypto, fiat, institutions):
-        click.echo('-' * column_count)
+    for asset_objs in (bullion, crypto, fiat, institutions):
+        click.echo('-' * terminal_size.columns)
 
-        for asset in sorted(asset_group, key=operator.attrgetter('value')):
+        for asset in sorted(asset_objs, key=operator.attrgetter('value')):
             if asset.value == 0:
                 continue
 
@@ -67,7 +68,7 @@ def main(discreet, update_assets, verbose, no_fetch):
             )
             click.echo(msg)
 
-    click.echo('=' * column_count)
+    click.echo('=' * terminal_size.columns)
 
     fmt_total_value = 'X' if discreet else f'{total_value:,.2f}'
     click.secho(f'     Networth: ${fmt_total_value}', fg='green')
