@@ -5,6 +5,7 @@ class Asset:
     def __init__(self, quantities=()):
         self._quantity = sum(quantities)
         self._price = None
+        self._value = None
 
     @property
     def price(self):
@@ -16,4 +17,6 @@ class Asset:
 
     @property
     def value(self):
-        return float(self.price) * self.quantity
+        if self._value is None:
+            self._value = float(self.price) * self.quantity
+        return self._value

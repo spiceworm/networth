@@ -45,7 +45,6 @@ class CryptoAsset(Asset):
     def __init__(self, balances_or_addresses=()):
         balances = [bal for bal in balances_or_addresses if not isinstance(bal, str)]
         self.addresses = [addr for addr in balances_or_addresses if isinstance(addr, str)]
-        self._price = None
         super().__init__(balances)
 
     @property
