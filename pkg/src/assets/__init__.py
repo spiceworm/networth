@@ -10,6 +10,7 @@ log = logging.getLogger()
 
 @functools.total_ordering
 class Asset:
+    SESSION = None
     SYMBOL = None
     LABEL = None
 
@@ -24,21 +25,21 @@ class Asset:
         self._value = None
 
     def __eq__(self, other: Asset) -> bool:
-        return self.value == other.value
+        return (self._value or 0) == (other._value or 0)
 
     def __lt__(self, other: Asset) -> bool:
-        return self.value < other.value
+        return (self._value or 0) < (other._value or 0)
 
     @property
-    def price(self) -> float:
+    async def price(self) -> float:
         raise NotImplemented
 
     @property
-    def quantity(self) -> float:
+    async def quantity(self) -> float:
         return self._quantity
 
     @property
-    def value(self) -> float:
+    async def value(self) -> float:
         if self._value is None:
-            self._value = float(self.price) * self.quantity
+            self._value = float(await self.price) * await self.quantity
         return self._value

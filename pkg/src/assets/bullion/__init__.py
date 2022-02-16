@@ -1,6 +1,5 @@
 import functools
-
-import requests
+import json
 
 from .. import Asset
 
@@ -9,11 +8,13 @@ class BullionAsset(Asset):
     _PRICES = None
 
     @property
-    def price(self) -> float:
+    async def price(self) -> float:
         if BullionAsset._PRICES is None:
-            resp = requests.get('https://api.metals.live/v1/spot')
-            resp.raise_for_status()
-            retval = resp.json()
+            async with self.SESSION.get('https://api.metals.live/v1/spot') as resp:
+                resp.raise_for_status()
+                # Mimetype is not set in response. Manually load json to silence warning
+                data = await resp.read()
+                retval = json.loads(data)
             merge_dicts = lambda a, b: {**a, **b}
             BullionAsset._PRICES = functools.reduce(merge_dicts, retval)
         return BullionAsset._PRICES[self.LABEL]

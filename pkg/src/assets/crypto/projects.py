@@ -60,7 +60,7 @@ class CryptoAsset(Asset):
         super().__init__(balances)
 
     @property
-    def price(self) -> float:
+    async def price(self) -> float:
         if self._price is None:
             api = pycoingecko.CoinGeckoAPI()
             retval = api.get_price(ids=self.LABEL, vs_currencies='usd')
@@ -68,15 +68,15 @@ class CryptoAsset(Asset):
         return self._price
 
     @property
-    def quantity(self) -> float:
+    async def quantity(self) -> float:
         coinbase = Coinbase()
-        gemini = Gemini()
+        gemini = Gemini(self.SESSION)
 
         coinbase_bal = coinbase.get_balance(self.SYMBOL) + sum([
             coinbase.get_balance(sa) for sa in getattr(self, 'SYMBOL_ALIASES', ())
         ])
-        gemini_bal = gemini.get_balance(self.SYMBOL) + sum([
-            Gemini().get_balance(sa) for sa in getattr(self, 'SYMBOL_ALIASES', ())
+        gemini_bal = await gemini.get_balance(self.SYMBOL) + sum([
+            await gemini.get_balance(sa) for sa in getattr(self, 'SYMBOL_ALIASES', ())
         ])
 
         hardcoded_bal = self._quantity
@@ -92,18 +92,19 @@ class EthereumAsset(CryptoAsset):
     CONTRACT_ADDRESS = None
 
     @property
-    def quantity(self) -> float:
+    async def quantity(self) -> float:
         # If assets.yaml defines any `self.addresses` for the current token.
         if self.addresses:
-            blockchain_bal = sum(
-                EtherScan().get_token_balance(addr, self.CONTRACT_ADDRESS)
+            api = EtherScan(self.SESSION)
+            blockchain_bal = sum([
+                await api.get_token_balance(addr, self.CONTRACT_ADDRESS)
                 for addr in self.addresses
-            )
+            ])
         else:
             blockchain_bal = 0
 
         return sum([
-            super().quantity,
+            await super().quantity,
             blockchain_bal,
         ])
 
@@ -188,8 +189,11 @@ class Ethereum(CryptoAsset):
     SYMBOL_ALIASES = ('ETH2',)
 
     @property
-    def quantity(self) -> float:
-        return super().quantity + EtherScan().get_ether_balances(*self.addresses, return_sum=True)
+    async def quantity(self) -> float:
+        etherscan = EtherScan(self.SESSION)
+        hardcoded_bal = await super().quantity
+        ether_bal = await etherscan.get_ether_balances(*self.addresses, return_sum=True)
+        return hardcoded_bal + ether_bal
 
 
 class Fantom(EthereumAsset):

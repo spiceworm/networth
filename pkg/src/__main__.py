@@ -1,10 +1,13 @@
 #!/usr/bin/env python
+import asyncio
 import logging
 import os
 
+import aiohttp
 import click
 import yaml
 
+from src.assets import Asset
 from src.assets.bullion import BULLION
 from src.assets.crypto import CRYPTO
 from src.assets.fiat import FIAT
@@ -25,6 +28,49 @@ log = logging.getLogger()
 log.setLevel(logging.INFO)
 
 
+async def execute(loaded_assets: dict, discreet: bool):
+    Asset.SESSION = aiohttp.ClientSession()
+
+    bullion = [CLS(loaded_assets['bullion'].get(CLS.LABEL, ())) for CLS in BULLION]
+    crypto = [CLS(loaded_assets['crypto'].get(CLS.LABEL, ())) for CLS in CRYPTO]
+    fiat = [CLS(loaded_assets['fiat'].get(CLS.LABEL, ())) for CLS in FIAT]
+    institutions = [CLS(loaded_assets['institutions'].get(CLS.LABEL, ())) for CLS in INSTITUTIONS]
+
+    assets = [*bullion, *crypto, *fiat, *institutions]
+    total_value = 0  # sum(await asset.value for asset in assets)
+    for asset in assets:
+        total_value += await asset.value
+
+    terminal_size = os.get_terminal_size()
+
+    for asset_objs in (bullion, crypto, fiat, institutions):
+        click.echo('-' * terminal_size.columns)
+
+        for asset in sorted(asset_objs):
+            value = await asset.value
+            quantity = await asset.quantity
+            price = await asset.price
+
+            if value == 0:
+                continue
+
+            asset_value = 'X' if discreet else f'{value:<15,.2f}'
+            portfolio_allocation = f'{value / total_value * 100:.4f}'
+            asset_quantity = 'X' if discreet else f'{quantity:,}'
+            msg = (
+                f'{asset.SYMBOL:>13}: ${asset_value} ({portfolio_allocation}%) '
+                f'({asset_quantity} @ ${click.style(price, fg="cyan")})'
+            )
+            click.echo(msg)
+
+    click.echo('=' * terminal_size.columns)
+
+    fmt_total_value = 'X' if discreet else f'{total_value:,.2f}'
+    click.secho(f'     Networth: ${fmt_total_value}', fg='green')
+
+    await Asset.SESSION.close()
+
+
 @click.command()
 @click.option('-d', '--discreet', is_flag=True)
 @click.option('-u', '--update-assets', is_flag=True)
@@ -41,36 +87,7 @@ def main(discreet, update_assets, verbose, no_fetch) -> None:
     with open('assets.yaml') as f:
         assets = yaml.safe_load(f)
 
-    bullion = [CLS(assets['bullion'].get(CLS.LABEL, ())) for CLS in BULLION]
-    crypto = [CLS(assets['crypto'].get(CLS.LABEL, ())) for CLS in CRYPTO]
-    fiat = [CLS(assets['fiat'].get(CLS.LABEL, ())) for CLS in FIAT]
-    institutions = [CLS(assets['institutions'].get(CLS.LABEL, ())) for CLS in INSTITUTIONS]
-
-    assets = [*bullion, *crypto, *fiat, *institutions]
-    total_value = sum(asset.value for asset in assets)
-
-    terminal_size = os.get_terminal_size()
-
-    for asset_objs in (bullion, crypto, fiat, institutions):
-        click.echo('-' * terminal_size.columns)
-
-        for asset in sorted(asset_objs):
-            if asset.value == 0:
-                continue
-
-            asset_value = 'X' if discreet else f'{asset.value:<15,.2f}'
-            portfolio_allocation = f'{asset.value / total_value * 100:.4f}'
-            asset_quantity = 'X' if discreet else f'{asset.quantity:,}'
-            msg = (
-                f'{asset.SYMBOL:>13}: ${asset_value} ({portfolio_allocation}%) '
-                f'({asset_quantity} @ ${click.style(asset.price, fg="cyan")})'
-            )
-            click.echo(msg)
-
-    click.echo('=' * terminal_size.columns)
-
-    fmt_total_value = 'X' if discreet else f'{total_value:,.2f}'
-    click.secho(f'     Networth: ${fmt_total_value}', fg='green')
+    asyncio.run(execute(assets, discreet))
 
 
 if __name__ == '__main__':

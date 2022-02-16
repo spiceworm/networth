@@ -9,7 +9,7 @@ class InstitutionalAsset(Asset):
         self._price = 1.0
 
     @property
-    def price(self) -> float:
+    async def price(self) -> float:
         return self._price
 
 
