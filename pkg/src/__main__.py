@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import logging
 import operator
 import subprocess
 
@@ -11,15 +12,32 @@ from src.assets.fiat import FIAT
 from src.assets.institution import INSTITUTIONS
 
 
+logging.basicConfig(
+    datefmt="%H:%M:%S",
+    format="%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s",
+    handlers=[
+        logging.StreamHandler(),
+    ],
+)
+
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+log = logging.getLogger()
+log.setLevel(logging.INFO)
+
+
 @click.command()
 @click.option('-d', '--discreet', is_flag=True)
 @click.option('-u', '--update-assets', is_flag=True)
+@click.option('-v', '--verbose', is_flag=True)
 @click.option('-z', '--no-fetch', is_flag=True)
-def main(discreet, update_assets, no_fetch):
+def main(discreet, update_assets, verbose, no_fetch):
     if update_assets:
         click.edit(editor='vim', filename='assets.yaml')
     if no_fetch:
         return
+    if verbose:
+        log.setLevel(logging.DEBUG)
 
     with open('assets.yaml') as f:
         assets = yaml.safe_load(f)

@@ -1,3 +1,5 @@
+import logging
+
 import pycoingecko
 
 from .apis import (
@@ -41,10 +43,19 @@ __all__ = [
 ]
 
 
+log = logging.getLogger()
+
+
 class CryptoAsset(Asset):
     def __init__(self, balances_or_addresses=()):
         balances = [bal for bal in balances_or_addresses if not isinstance(bal, str)]
         self.addresses = [addr for addr in balances_or_addresses if isinstance(addr, str)]
+
+        if self.addresses:
+            log.debug("Hardcoded address for %s:", self.__class__.__name__)
+            for address in self.addresses:
+                log.debug('- %s', address)
+
         super().__init__(balances)
 
     @property
