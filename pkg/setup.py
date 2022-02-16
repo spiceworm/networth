@@ -5,12 +5,11 @@ setup(
     author='ecaz.eth',
     packages=['src'] + find_packages(),
     install_requires=[
-        'click >= 8.0.1',
+        'click >= 8.0.3',
         'pycoingecko >= 2.2.0',
-        'PyYAML >= 5.4.1',
-        'requests >= 2.24.0',
-        'web3 >= 5.23.0',
-        'IPython',
+        'PyYAML >= 6.0',
+        'requests >= 2.27.1',
+        'web3 >= 5.28.0',
     ],
     entry_points={
         'console_scripts': [
