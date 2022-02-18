@@ -21,7 +21,7 @@ __all__ = [
     'Cardano',
     'CRYPTO',
     'Chainlink',
-    'CryptoDotCom',
+    'Cronos',
     'Decentraland',
     'DYDX',
     'ENS',
@@ -154,7 +154,7 @@ class Chainlink(EthereumAsset):
     SYMBOL = 'LINK'
 
 
-class CryptoDotCom(EthereumAsset):
+class Cronos(EthereumAsset):
     CONTRACT_ADDRESS = '0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b'
     LABEL = 'crypto-com-chain'
     SYMBOL = 'CRO'
@@ -289,7 +289,7 @@ CRYPTO = [
     Bitcoin,
     Cardano,
     Chainlink,
-    CryptoDotCom,
+    Cronos,
     Decentraland,
     DYDX,
     ENS,
