@@ -28,7 +28,7 @@ log = logging.getLogger()
 log.setLevel(logging.INFO)
 
 
-async def execute(loaded_assets: dict, discreet: bool):
+async def execute(loaded_assets: dict, discreet: bool, min_balance: float):
     Asset.SESSION = aiohttp.ClientSession()
 
     bullion = [CLS(loaded_assets['bullion'].get(CLS.LABEL, ())) for CLS in BULLION]
@@ -51,7 +51,7 @@ async def execute(loaded_assets: dict, discreet: bool):
             quantity = await asset.quantity
             price = await asset.price
 
-            if value == 0:
+            if value < min_balance:
                 continue
 
             asset_value = 'X' if discreet else f'{value:<15,.2f}'
@@ -73,10 +73,11 @@ async def execute(loaded_assets: dict, discreet: bool):
 
 @click.command()
 @click.option('-d', '--discreet', is_flag=True)
+@click.option('-m', '--min-balance', type=float, default=10.0)
 @click.option('-u', '--update-assets', is_flag=True)
 @click.option('-v', '--verbose', is_flag=True)
 @click.option('-z', '--no-fetch', is_flag=True)
-def main(discreet, update_assets, verbose, no_fetch) -> None:
+def main(discreet, min_balance, update_assets, verbose, no_fetch) -> None:
     if update_assets:
         click.edit(editor='vim', filename='assets.yaml')
     if no_fetch:
@@ -87,7 +88,7 @@ def main(discreet, update_assets, verbose, no_fetch) -> None:
     with open('assets.yaml') as f:
         assets = yaml.safe_load(f)
 
-    asyncio.run(execute(assets, discreet))
+    asyncio.run(execute(assets, discreet, min_balance))
 
 
 if __name__ == '__main__':
