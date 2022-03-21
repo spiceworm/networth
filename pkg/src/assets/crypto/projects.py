@@ -239,7 +239,7 @@ class Rari(EthereumAsset):
 
 
 class RocketPool(EthereumAsset):
-    CONTRACT_ADDRESS = '0xb4efd85c19999d84251304bda99e90b92300bd93'
+    CONTRACT_ADDRESS = '0xd33526068d116ce69f19a9ee46f0bd304f21a51f'
     LABEL = 'rocket-pool'
     SYMBOL = 'RPL'
 
