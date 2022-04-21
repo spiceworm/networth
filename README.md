@@ -2,7 +2,7 @@
 ### Installation
 #### Create file containing API credentials
 ```bash
-echo << EOF >> ~/.networth/credentials
+cat << EOF >> ~/.networth/credentials
 COINBASE_API_KEY=...
 COINBASE_API_SECRET=...
 ETHERSCAN_API_KEY=...
@@ -13,7 +13,7 @@ EOF
 
 #### Create executable file
 ```bash
-echo << EOF >> /usr/local/bin/networth
+cat << EOF >> /usr/local/bin/networth
 #!/usr/bin/env bash
 
 set -e
@@ -33,4 +33,11 @@ docker run --rm -it \
 
 popd > /dev/null
 EOF
+```
+
+
+#### Set ownership and permissions
+```bash
+sudo chown $USER:$USER /usr/local/bin/networth
+chmod 0755 /usr/local/bin/networth
 ```
