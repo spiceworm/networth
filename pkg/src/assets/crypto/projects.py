@@ -4,6 +4,7 @@ from typing import Iterable, Union
 import pycoingecko
 
 from .apis import (
+    BlockStream,
     Coinbase,
     EtherScan,
     Gemini,
@@ -141,6 +142,13 @@ class AxieInfinity(EthereumAsset):
 class Bitcoin(CryptoAsset):
     LABEL = 'bitcoin'
     SYMBOL = 'BTC'
+
+    @property
+    async def quantity(self) -> float:
+        blockstream = BlockStream(self.SESSION)
+        hardcoded_bal = await super().quantity
+        bitcoin_bal = await blockstream.get_balances(*self.addresses, return_sum=True)
+        return hardcoded_bal + bitcoin_bal
 
 
 class Cardano(CryptoAsset):
