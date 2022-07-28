@@ -3,11 +3,15 @@ from datetime import datetime
 import hashlib
 import hmac
 import json
+import logging
 import os
 import time
 from typing import Union
 
 import aiohttp
+
+
+log = logging.getLogger(__name__)
 
 
 def _counter():
@@ -48,6 +52,7 @@ class Gemini:
             'Cache-Control': 'no-cache'
         }
 
+        log.debug(f'Sending request to {url}')
         async with self.session.post(url=url, json=payload, headers=headers) as resp:
             resp.raise_for_status()
             return await resp.json()

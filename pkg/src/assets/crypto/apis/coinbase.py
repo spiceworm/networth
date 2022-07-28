@@ -1,12 +1,16 @@
 from datetime import datetime
 import hashlib
 import hmac
+import logging
 import os
 import time
 from typing import Union
 
 import requests
 from requests.auth import AuthBase
+
+
+log = logging.getLogger(__name__)
 
 
 class _CoinbaseWalletAuth(AuthBase):
@@ -43,7 +47,9 @@ class Coinbase:
         return Coinbase.BALANCES.get(symbol, 0)
 
     def _fetch_balances(self, next_uri='') -> None:
-        resp = requests.get(self.API_URL + (next_uri or '/v2/accounts'), auth=self.auth)
+        url = self.API_URL + (next_uri or '/v2/accounts')
+        log.debug(f'Sending request to {url}')
+        resp = requests.get(url, auth=self.auth)
         resp.raise_for_status()
         retval = resp.json()
 

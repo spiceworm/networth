@@ -1,7 +1,11 @@
+import logging
 import os
 from typing import List, Union
 
 import aiohttp
+
+
+log = logging.getLogger(__name__)
 
 
 def wei_to_ether(wei) -> float:
@@ -22,7 +26,9 @@ class EtherScan:
         return f'{self.API_URL}/api?{params}'
 
     async def _send(self, request, **kwargs) -> dict:
-        async with request(url=self._build_url(**kwargs)) as resp:
+        url = self._build_url(**kwargs)
+        log.debug(f'Sending request to {url}')
+        async with request(url=url) as resp:
             resp.raise_for_status()
             return await resp.json()
 
