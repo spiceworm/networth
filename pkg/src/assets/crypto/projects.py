@@ -49,6 +49,8 @@ log = logging.getLogger()
 
 
 class CryptoAsset(Asset):
+    prices = {}
+
     def __init__(self, balances_or_addresses: Iterable[Union[float, int, str]] = ()):
         balances = [bal for bal in balances_or_addresses if not isinstance(bal, str)]
         self.addresses = [addr for addr in balances_or_addresses if isinstance(addr, str)]
@@ -60,13 +62,15 @@ class CryptoAsset(Asset):
 
         super().__init__(balances)
 
+    async def fetch_prices(self, *ids) -> None:
+        if not CryptoAsset.prices:
+            api = pycoingecko.CoinGeckoAPI()
+            retval = api.get_coins_markets('usd', ids=','.join(ids))
+            CryptoAsset.prices = {project['id']: project['current_price'] for project in retval}
+
     @property
     async def price(self) -> float:
-        if self._price is None:
-            api = pycoingecko.CoinGeckoAPI()
-            retval = api.get_price(ids=self.LABEL, vs_currencies='usd')
-            self._price = retval[self.LABEL]['usd']
-        return self._price
+        return CryptoAsset.prices[self.LABEL]
 
     @property
     async def quantity(self) -> float:

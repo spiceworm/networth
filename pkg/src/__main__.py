@@ -36,6 +36,13 @@ async def execute(loaded_assets: dict, discreet: bool, min_balance: float):
     fiat = [CLS(loaded_assets['fiat'].get(CLS.LABEL, ())) for CLS in FIAT]
     institutions = [CLS(loaded_assets['institutions'].get(CLS.LABEL, ())) for CLS in INSTITUTIONS]
 
+    # Fetch prices for all crypto projects in a single request and store them as a class attribute
+    # on `CryptoAsset`. This method only needs to be called once to fetch all price data so break
+    # after calling it on the first instance.
+    for project in crypto:
+        await project.fetch_prices(*[project.LABEL for project in crypto])
+        break
+
     assets = [*bullion, *crypto, *fiat, *institutions]
     total_value = 0  # sum(await asset.value for asset in assets)
     for asset in assets:
