@@ -3,11 +3,9 @@ from typing import List, Union
 
 import aiohttp
 
-from web3 import Web3
-
 
 def wei_to_ether(wei) -> float:
-    return float(Web3.fromWei(int(wei), 'ether'))
+    return int(wei) * 10 ** -18
 
 
 class EtherScan:
