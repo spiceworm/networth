@@ -54,11 +54,9 @@ class Coinbase:
         retval = resp.json()
 
         for account in retval['data']:
-            balance = float(account['balance']['amount'])
-            if balance:
+            if balance := float(account['balance']['amount']):
                 symbol = account['balance']['currency']
                 Coinbase.BALANCES[symbol] = balance
 
-        next_uri = retval['pagination']['next_uri']
-        if next_uri:
+        if next_uri := retval['pagination']['next_uri']:
             return self._fetch_balances(next_uri)
