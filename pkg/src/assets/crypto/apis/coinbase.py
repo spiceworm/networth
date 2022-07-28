@@ -22,22 +22,24 @@ class _CoinbaseWalletAuth(AuthBase):
         timestamp = int(time.time())
         message = f'{timestamp}{request.method}{request.path_url}{request.body or ""}'
         signature = hmac.new(self.secret_key.encode(), message.encode(), hashlib.sha256).hexdigest()
-        request.headers.update({
-            'CB-ACCESS-SIGN': signature,
-            'CB-ACCESS-TIMESTAMP': timestamp,
-            'CB-ACCESS-KEY': self.api_key,
-            'CB-VERSION': datetime.today().strftime('%Y-%m-%d'),
-        })
+        request.headers.update(
+            {
+                "CB-ACCESS-SIGN": signature,
+                "CB-ACCESS-TIMESTAMP": timestamp,
+                "CB-ACCESS-KEY": self.api_key,
+                "CB-VERSION": datetime.today().strftime("%Y-%m-%d"),
+            }
+        )
         return request
 
 
 class Coinbase:
-    API_URL = 'https://api.coinbase.com'
+    API_URL = "https://api.coinbase.com"
     BALANCES = None
 
     def __init__(self):
-        api_key = os.environ['COINBASE_API_KEY']
-        api_secret = os.environ['COINBASE_API_SECRET']
+        api_key = os.environ["COINBASE_API_KEY"]
+        api_secret = os.environ["COINBASE_API_SECRET"]
         self.auth = _CoinbaseWalletAuth(api_key, api_secret)
 
     def get_balance(self, symbol) -> Union[float, int]:
@@ -46,17 +48,17 @@ class Coinbase:
             self._fetch_balances()
         return Coinbase.BALANCES.get(symbol, 0)
 
-    def _fetch_balances(self, next_uri='') -> None:
-        url = self.API_URL + (next_uri or '/v2/accounts')
-        log.debug(f'Sending request to {url}')
+    def _fetch_balances(self, next_uri="") -> None:
+        url = self.API_URL + (next_uri or "/v2/accounts")
+        log.debug(f"Sending request to {url}")
         resp = requests.get(url, auth=self.auth)
         resp.raise_for_status()
         retval = resp.json()
 
-        for account in retval['data']:
-            if balance := float(account['balance']['amount']):
-                symbol = account['balance']['currency']
+        for account in retval["data"]:
+            if balance := float(account["balance"]["amount"]):
+                symbol = account["balance"]["currency"]
                 Coinbase.BALANCES[symbol] = balance
 
-        if next_uri := retval['pagination']['next_uri']:
+        if next_uri := retval["pagination"]["next_uri"]:
             return self._fetch_balances(next_uri)

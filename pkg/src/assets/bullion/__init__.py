@@ -10,7 +10,7 @@ class BullionAsset(Asset):
     @property
     async def price(self) -> float:
         if BullionAsset._PRICES is None:
-            async with self.SESSION.get('https://api.metals.live/v1/spot') as resp:
+            async with self.SESSION.get("https://api.metals.live/v1/spot") as resp:
                 resp.raise_for_status()
                 # Mimetype is not set in response. Manually load json to silence warning
                 data = await resp.read()
@@ -21,13 +21,13 @@ class BullionAsset(Asset):
 
 
 class Gold(BullionAsset):
-    LABEL = 'gold'
-    SYMBOL = 'GLD'
+    LABEL = "gold"
+    SYMBOL = "GLD"
 
 
 class Silver(BullionAsset):
-    LABEL = 'silver'
-    SYMBOL = 'SLV'
+    LABEL = "silver"
+    SYMBOL = "SLV"
 
 
 BULLION = [Gold, Silver]

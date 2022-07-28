@@ -14,23 +14,23 @@ class InstitutionalAsset(Asset):
 
 
 class Fidelity(InstitutionalAsset):
-    LABEL = 'fidelity'
-    SYMBOL = 'Fidelity'
+    LABEL = "fidelity"
+    SYMBOL = "Fidelity"
 
 
 class MerrillLynch(InstitutionalAsset):
-    LABEL = 'merrill-lynch'
-    SYMBOL = 'Merrill Lynch'
+    LABEL = "merrill-lynch"
+    SYMBOL = "Merrill Lynch"
 
 
 class RealEstate(InstitutionalAsset):
-    LABEL = 'real-estate'
-    SYMBOL = 'Real Estate'
+    LABEL = "real-estate"
+    SYMBOL = "Real Estate"
 
 
 class UMCU(InstitutionalAsset):
-    LABEL = 'umcu'
-    SYMBOL = 'UMCU'
+    LABEL = "umcu"
+    SYMBOL = "UMCU"
 
 
 INSTITUTIONS = [Fidelity, MerrillLynch, RealEstate, UMCU]

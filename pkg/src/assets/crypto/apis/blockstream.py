@@ -12,18 +12,18 @@ def satoshis_to_bitcoin(satoshis) -> float:
 
 
 class BlockStream:
-    API_URL = 'https://blockstream.info'
+    API_URL = "https://blockstream.info"
 
     def __init__(self, session: aiohttp.ClientSession):
         self.session = session
 
     def _build_url(self, **kwargs) -> str:
         endpoint = kwargs["endpoint"]
-        return f'{self.API_URL}/api/{endpoint}'
+        return f"{self.API_URL}/api/{endpoint}"
 
     async def _send(self, request, **kwargs) -> dict:
         url = self._build_url(**kwargs)
-        log.debug(f'Sending request to {url}')
+        log.debug(f"Sending request to {url}")
 
         async with request(url=self._build_url(**kwargs)) as resp:
             resp.raise_for_status()
@@ -37,15 +37,17 @@ class BlockStream:
 
         # API does not support lookup for multiple addresses in a single request
         for address in addresses:
-            params = {'endpoint': f'address/{address}'}
+            params = {"endpoint": f"address/{address}"}
             retval = await self._send(self.session.get, **params)
-            chain_stats = retval['chain_stats']
-            unspent_satoshis = chain_stats['funded_txo_sum'] - chain_stats['spent_txo_sum']
-            accounts.append({
-                'address': address,
-                'balance': satoshis_to_bitcoin(unspent_satoshis),
-            })
+            chain_stats = retval["chain_stats"]
+            unspent_satoshis = chain_stats["funded_txo_sum"] - chain_stats["spent_txo_sum"]
+            accounts.append(
+                {
+                    "address": address,
+                    "balance": satoshis_to_bitcoin(unspent_satoshis),
+                }
+            )
 
         if not return_sum:
             return accounts
-        return sum(account['balance'] for account in accounts)
+        return sum(account["balance"] for account in accounts)

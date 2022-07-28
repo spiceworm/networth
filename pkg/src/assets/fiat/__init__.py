@@ -6,8 +6,8 @@ class FiatAsset(Asset):
 
 
 class USD(FiatAsset):
-    LABEL = 'usd'
-    SYMBOL = 'USD'
+    LABEL = "usd"
+    SYMBOL = "USD"
 
     @property
     async def price(self) -> float:

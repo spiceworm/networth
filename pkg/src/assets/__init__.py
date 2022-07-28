@@ -16,9 +16,9 @@ class Asset:
 
     def __init__(self, quantities: Iterable[Union[float, int]] = ()):
         if quantities:
-            log.debug('Hardcoded quantities for %s:', self.__class__.__name__)
+            log.debug("Hardcoded quantities for %s:", self.__class__.__name__)
             for qty in quantities:
-                log.debug('- %s', qty)
+                log.debug("- %s", qty)
 
         self._quantity = sum(quantities)
         self._price = None
