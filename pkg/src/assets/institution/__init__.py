@@ -13,6 +13,11 @@ class InstitutionalAsset(Asset):
         return self._price
 
 
+class CharlesSchwab(InstitutionalAsset):
+    LABEL = "charles-schwab"
+    SYMBOL = "Charles Schwab"
+
+
 class Fidelity(InstitutionalAsset):
     LABEL = "fidelity"
     SYMBOL = "Fidelity"
@@ -33,4 +38,4 @@ class UMCU(InstitutionalAsset):
     SYMBOL = "UMCU"
 
 
-INSTITUTIONS = [Fidelity, MerrillLynch, RealEstate, UMCU]
+INSTITUTIONS = [Fidelity, CharlesSchwab, MerrillLynch, RealEstate, UMCU]
