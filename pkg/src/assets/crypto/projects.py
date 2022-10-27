@@ -33,6 +33,7 @@ __all__ = [
     "Illuvium",
     "ImmutableX",
     "LoopRing",
+    "Optimism",
     "Polygon",
     "Rari",
     "RocketPool",
@@ -239,6 +240,12 @@ class LoopRing(EthereumAsset):
     SYMBOL = "LRC"
 
 
+class Optimism(EthereumAsset):
+    CONTRACT_ADDRESS = "0x4200000000000000000000000000000000000042"
+    LABEL = "optimism"
+    SYMBOL = "OP"
+
+
 class Polygon(EthereumAsset):
     CONTRACT_ADDRESS = "0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0"
     LABEL = "matic-network"
@@ -313,6 +320,7 @@ CRYPTO = [
     Illuvium,
     ImmutableX,
     LoopRing,
+    Optimism,
     Polygon,
     Rari,
     RocketPool,
