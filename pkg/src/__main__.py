@@ -44,7 +44,7 @@ async def execute(loaded_assets: dict, discreet: bool, min_balance: float):
         break
 
     assets = [*bullion, *crypto, *fiat, *institutions]
-    total_value = 0  # sum(await asset.value for asset in assets)
+    total_value = 0
     for asset in assets:
         total_value += await asset.value
 
