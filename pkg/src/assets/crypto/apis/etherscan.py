@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 from typing import List, Union
@@ -6,6 +7,7 @@ import aiohttp
 
 
 log = logging.getLogger(__name__)
+_sem = asyncio.Semaphore()
 
 
 def wei_to_ether(wei) -> float:
@@ -28,9 +30,11 @@ class EtherScan:
     async def _send(self, request, **kwargs) -> dict:
         url = self._build_url(**kwargs)
         log.debug(f"Sending request to {url}")
-        async with request(url=url) as resp:
-            resp.raise_for_status()
-            return await resp.json()
+        async with _sem:
+            await asyncio.sleep(0.2)
+            async with request(url=url) as resp:
+                resp.raise_for_status()
+                return await resp.json()
 
     async def get_ether_balance(self, address: str) -> float:
         return await self.get_ether_balances(address, return_sum=True)
