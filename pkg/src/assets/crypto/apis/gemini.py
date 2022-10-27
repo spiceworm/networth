@@ -14,16 +14,6 @@ import aiohttp
 log = logging.getLogger(__name__)
 
 
-def _counter():
-    n = 1
-    while True:
-        yield n
-        n += 1
-
-
-COUNTER = _counter()
-
-
 class Gemini:
     API_URL = "https://api.gemini.com"
     BALANCES = None
@@ -36,7 +26,7 @@ class Gemini:
 
     async def _auth_send(self, **payload) -> dict:
         t = datetime.now()
-        payload["nonce"] = str(int(time.mktime(t.timetuple()) * 1000) + next(COUNTER))
+        payload["nonce"] = time.time()
         encoded_payload = json.dumps(payload).encode()
         b64 = base64.b64encode(encoded_payload)
         signature = hmac.new(self.api_secret, b64, hashlib.sha384).hexdigest()
