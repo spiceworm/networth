@@ -2,19 +2,20 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import Iterable, Union
+from typing import Iterable
 
+import aiohttp
 
 log = logging.getLogger()
 
 
 @functools.total_ordering
 class Asset:
-    SESSION = None
-    SYMBOL = None
-    LABEL = None
+    SESSION: aiohttp.ClientSession | None = None
+    SYMBOL: str | None = None
+    LABEL: str | None = None
 
-    def __init__(self, quantities: Iterable[Union[float, int]] = ()):
+    def __init__(self, quantities: Iterable[float | int] = ()):
         if quantities:
             log.debug("Hardcoded quantities for %s:", self.__class__.__name__)
             for qty in quantities:

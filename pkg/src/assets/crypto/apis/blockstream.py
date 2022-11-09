@@ -1,5 +1,5 @@
 import logging
-from typing import List, Union
+from typing import Dict, Iterable
 
 import aiohttp
 
@@ -21,7 +21,7 @@ class BlockStream:
         endpoint = kwargs["endpoint"]
         return f"{self.API_URL}/api/{endpoint}"
 
-    async def _send(self, request, **kwargs) -> dict:
+    async def _send(self, request, **kwargs) -> Dict:
         url = self._build_url(**kwargs)
         log.debug(f"Sending request to {url}")
 
@@ -32,7 +32,7 @@ class BlockStream:
     async def get_balance(self, address: str) -> float:
         return await self.get_balances(address, return_sum=True)
 
-    async def get_balances(self, *addresses, return_sum: bool = False) -> Union[float, List[dict]]:
+    async def get_balances(self, *addresses, return_sum: bool = False) -> float | Iterable[Dict]:
         accounts = []
 
         # API does not support lookup for multiple addresses in a single request

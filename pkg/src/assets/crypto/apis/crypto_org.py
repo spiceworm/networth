@@ -12,11 +12,10 @@ class CryptoDotOrg:
     def __init__(self, session: aiohttp.ClientSession):
         self.session = session
 
-    async def get_cro_balance(self, address):
+    async def get_cro_balance(self, address) -> float:
         url = f"{self.API_URL}/api/v1/accounts/{address}"
         log.debug(f"Sending request to {url}")
-        async with self.session.get(url) as resp:
-            resp.raise_for_status()
+        async with self.session.get(url, raise_for_status=True) as resp:
             data = await resp.json()
             balances = data["result"]["totalBalance"]
             base_cro_balance = sum(float(balance["amount"]) for balance in balances)

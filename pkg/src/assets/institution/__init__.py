@@ -1,10 +1,10 @@
-from typing import Iterable, Union
+from typing import Iterable
 
 from .. import Asset
 
 
 class InstitutionalAsset(Asset):
-    def __init__(self, quantities: Iterable[Union[float, int]] = ()):
+    def __init__(self, quantities: Iterable[float | int] = ()):
         super().__init__(quantities)
         self._price = 1.0
 

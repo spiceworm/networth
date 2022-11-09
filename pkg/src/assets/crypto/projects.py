@@ -97,7 +97,7 @@ class CryptoAsset(Asset):
 
 
 class EthereumAsset(CryptoAsset):
-    CONTRACT_ADDRESS = None
+    CONTRACT_ADDRESS: str | None = None
 
     @property
     async def quantity(self) -> float:

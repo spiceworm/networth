@@ -4,7 +4,7 @@ import hmac
 import logging
 import os
 import time
-from typing import Union
+from typing import Dict
 
 import requests
 from requests.auth import AuthBase
@@ -14,9 +14,9 @@ log = logging.getLogger(__name__)
 
 
 class _CoinbaseWalletAuth(AuthBase):
-    def __init__(self, api_key, secret_key):
-        self.api_key = api_key
-        self.secret_key = secret_key
+    def __init__(self, api_key: str, secret_key: str):
+        self.api_key: str = api_key
+        self.secret_key: str = secret_key
 
     def __call__(self, request) -> requests.Response:
         timestamp = int(time.time())
@@ -34,21 +34,21 @@ class _CoinbaseWalletAuth(AuthBase):
 
 
 class Coinbase:
-    API_URL = "https://api.coinbase.com"
-    BALANCES = None
+    API_URL: str = "https://api.coinbase.com"
+    BALANCES: Dict[str, float] | None = None
 
     def __init__(self):
         api_key = os.environ["COINBASE_API_KEY"]
         api_secret = os.environ["COINBASE_API_SECRET"]
         self.auth = _CoinbaseWalletAuth(api_key, api_secret)
 
-    def get_balance(self, symbol) -> Union[float, int]:
+    def get_balance(self, symbol) -> float:
         if Coinbase.BALANCES is None:
             Coinbase.BALANCES = {}
             self._fetch_balances()
-        return Coinbase.BALANCES.get(symbol, 0)
+        return Coinbase.BALANCES.get(symbol, 0.0)
 
-    def _fetch_balances(self, next_uri="") -> None:
+    def _fetch_balances(self, next_uri: str = "") -> None:
         url = self.API_URL + (next_uri or "/v2/accounts")
         log.debug(f"Sending request to {url}")
         resp = requests.get(url, auth=self.auth)

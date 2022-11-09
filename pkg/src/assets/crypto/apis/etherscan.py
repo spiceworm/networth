@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import os
-from typing import List, Union
+from typing import Dict, Iterable
 
 import aiohttp
 
@@ -15,11 +15,10 @@ def wei_to_ether(wei) -> float:
 
 
 class EtherScan:
-    API_URL = "https://api.etherscan.io"
-    BALANCES = {}
+    API_URL: str = "https://api.etherscan.io"
 
     def __init__(self, session: aiohttp.ClientSession):
-        self.api_key = os.environ["ETHERSCAN_API_KEY"]
+        self.api_key: str = os.environ["ETHERSCAN_API_KEY"]
         self.session = session
 
     def _build_url(self, **kwargs) -> str:
@@ -27,7 +26,7 @@ class EtherScan:
         params = "&".join(f"{k}={v}" for k, v in kwargs.items())
         return f"{self.API_URL}/api?{params}"
 
-    async def _send(self, request, **kwargs) -> dict:
+    async def _send(self, request, **kwargs) -> Dict:
         url = self._build_url(**kwargs)
         log.debug(f"Sending request to {url}")
         async with _sem:
@@ -39,7 +38,7 @@ class EtherScan:
     async def get_ether_balance(self, address: str) -> float:
         return await self.get_ether_balances(address, return_sum=True)
 
-    async def get_ether_balances(self, *addresses, return_sum: bool = False) -> Union[float, List[dict]]:
+    async def get_ether_balances(self, *addresses, return_sum: bool = False) -> float | Iterable[Dict]:
         params = {"module": "account", "action": "balancemulti", "address": ",".join(addresses)}
         retval = await self._send(self.session.get, **params)
         accounts = retval["result"]
