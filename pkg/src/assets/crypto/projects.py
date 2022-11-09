@@ -57,9 +57,11 @@ class CryptoAsset(Asset):
         self.addresses = [addr for addr in balances_or_addresses if isinstance(addr, str)]
 
         if self.addresses:
-            log.debug("Hardcoded address for %s:", self.__class__.__name__)
-            for address in self.addresses:
-                log.debug("- %s", address)
+            log.debug(
+                "Hardcoded address for %s: %s",
+                self.__class__.__name__,
+                ", ".join(self.addresses)
+            )
 
         super().__init__(balances)
 
