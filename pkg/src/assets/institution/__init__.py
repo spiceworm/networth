@@ -23,6 +23,11 @@ class Fidelity(InstitutionalAsset):
     SYMBOL = "Fidelity"
 
 
+class IBonds(InstitutionalAsset):
+    LABEL = "ibonds"
+    SYMBOL = "I-Bonds"
+
+
 class MerrillLynch(InstitutionalAsset):
     LABEL = "merrill-lynch"
     SYMBOL = "Merrill Lynch"
@@ -38,4 +43,4 @@ class UMCU(InstitutionalAsset):
     SYMBOL = "UMCU"
 
 
-INSTITUTIONS = [Fidelity, CharlesSchwab, MerrillLynch, RealEstate, UMCU]
+INSTITUTIONS = [Fidelity, CharlesSchwab, IBonds, MerrillLynch, RealEstate, UMCU]
