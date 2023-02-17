@@ -64,9 +64,10 @@ async def execute(loaded_assets: dict, discreet: bool, min_balance: float):
             asset_value = "X" if discreet else f"{value:<15,.2f}"
             portfolio_allocation = f"{value / total_value * 100:.4f}"
             asset_quantity = "X" if discreet else f"{quantity:,}"
+            fmt_price = f'{price:,}'
             msg = (
                 f"{asset.SYMBOL:>13}: ${asset_value} ({portfolio_allocation}%) "
-                f'({asset_quantity} @ ${click.style(price, fg="cyan")})'
+                f'({asset_quantity} @ ${click.style(fmt_price, fg="cyan")})'
             )
             click.echo(msg)
 
