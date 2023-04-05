@@ -28,7 +28,7 @@ log = logging.getLogger()
 log.setLevel(logging.INFO)
 
 
-async def execute(loaded_assets: dict, discreet: bool, min_balance: float):
+async def execute(loaded_assets: dict, simulated_values: dict, discreet: bool, min_balance: float):
     Asset.SESSION = aiohttp.ClientSession()
 
     bullion = [CLS(loaded_assets["bullion"].get(CLS.LABEL, ())) for CLS in BULLION]
@@ -42,6 +42,10 @@ async def execute(loaded_assets: dict, discreet: bool, min_balance: float):
     for project in crypto:
         await project.fetch_prices(*[project.LABEL for project in crypto])
         break
+
+    if crypto and simulated_values:
+        for project_name, value in simulated_values.items():
+            crypto[0].prices[project_name] = value
 
     assets = [*bullion, *crypto, *fiat, *institutions]
     total_value = 0
@@ -82,21 +86,28 @@ async def execute(loaded_assets: dict, discreet: bool, min_balance: float):
 @click.command()
 @click.option("-d", "--discreet", is_flag=True)
 @click.option("-m", "--min-balance", type=float, default=10.0)
+@click.option("-s", "--simulate", type=str)
 @click.option("-u", "--update-assets", is_flag=True)
 @click.option("-v", "--verbose", is_flag=True)
 @click.option("-z", "--no-fetch", is_flag=True)
-def main(discreet, min_balance, update_assets, verbose, no_fetch) -> None:
+def main(discreet, min_balance, simulate, update_assets, verbose, no_fetch) -> None:
+    simulated_values = {}
+
     if update_assets:
         click.edit(editor="vim", filename="assets.yaml")
     if no_fetch:
         return
     if verbose:
         log.setLevel(logging.DEBUG)
+    if simulate:
+        for pair in simulate.split(","):
+            project_name, value = pair.split("=")
+            simulated_values[project_name] = float(value)
 
     with open("assets.yaml") as f:
         assets = yaml.safe_load(f)
 
-    asyncio.run(execute(assets, discreet, min_balance))
+    asyncio.run(execute(assets, simulated_values, discreet, min_balance))
 
 
 if __name__ == "__main__":
