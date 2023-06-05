@@ -31,10 +31,10 @@ log.setLevel(logging.INFO)
 async def execute(loaded_assets: dict, simulated_values: dict, discreet: bool, min_balance: float):
     Asset.SESSION = aiohttp.ClientSession()
 
-    bullion = [CLS(loaded_assets["bullion"].get(CLS.LABEL, ())) for CLS in BULLION]
-    crypto = [CLS(loaded_assets["crypto"].get(CLS.LABEL, ())) for CLS in CRYPTO]
-    fiat = [CLS(loaded_assets["fiat"].get(CLS.LABEL, ())) for CLS in FIAT]
-    institutions = [CLS(loaded_assets["institutions"].get(CLS.LABEL, ())) for CLS in INSTITUTIONS]
+    bullion = [CLS(loaded_assets.get("bullion", {}).get(CLS.LABEL, ())) for CLS in BULLION]
+    crypto = [CLS(loaded_assets.get("crypto", {}).get(CLS.LABEL, ())) for CLS in CRYPTO]
+    fiat = [CLS(loaded_assets.get("fiat", {}).get(CLS.LABEL, ())) for CLS in FIAT]
+    institutions = [CLS(loaded_assets.get("institutions", {}).get(CLS.LABEL, ())) for CLS in INSTITUTIONS]
 
     # Fetch prices for all crypto projects in a single request and store them as a class attribute
     # on `CryptoAsset`. This method only needs to be called once to fetch all price data so break
