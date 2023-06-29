@@ -50,7 +50,8 @@ async def execute(loaded_assets: dict, simulated_values: dict, discreet: bool, m
     assets = [*bullion, *crypto, *fiat, *institutions]
     total_value = 0
     for asset in assets:
-        total_value += await asset.value
+        if await asset.quantity:
+            total_value += await asset.value
 
     terminal_size = os.get_terminal_size()
 
@@ -58,22 +59,23 @@ async def execute(loaded_assets: dict, simulated_values: dict, discreet: bool, m
         click.echo("-" * terminal_size.columns)
 
         for asset in sorted(asset_objs):
-            value = await asset.value
-            quantity = await asset.quantity
-            price = await asset.price
+            if await asset.quantity > 0:
+                value = await asset.value
+                quantity = await asset.quantity
+                price = await asset.price
 
-            if value < min_balance:
-                continue
+                if value < min_balance:
+                    continue
 
-            asset_value = "X" if discreet else f"{value:<15,.2f}"
-            portfolio_allocation = f"{value / total_value * 100:.4f}"
-            asset_quantity = "X" if discreet else f"{quantity:,}"
-            fmt_price = f'{price:,}'
-            msg = (
-                f"{asset.SYMBOL:>13}: ${asset_value} ({portfolio_allocation}%) "
-                f'({asset_quantity} @ ${click.style(fmt_price, fg="cyan")})'
-            )
-            click.echo(msg)
+                asset_value = "X" if discreet else f"{value:<15,.2f}"
+                portfolio_allocation = f"{value / total_value * 100:.4f}"
+                asset_quantity = "X" if discreet else f"{quantity:,}"
+                fmt_price = f'{price:,}'
+                msg = (
+                    f"{asset.SYMBOL:>13}: ${asset_value} ({portfolio_allocation}%) "
+                    f'({asset_quantity} @ ${click.style(fmt_price, fg="cyan")})'
+                )
+                click.echo(msg)
 
     click.echo("=" * terminal_size.columns)
 
