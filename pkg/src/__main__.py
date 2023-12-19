@@ -12,6 +12,7 @@ from src.assets.bullion import BULLION
 from src.assets.crypto import CRYPTO
 from src.assets.fiat import FIAT
 from src.assets.institution import INSTITUTIONS
+from src.assets.vehicles import VEHICLES
 
 
 logging.basicConfig(
@@ -35,6 +36,7 @@ async def execute(loaded_assets: dict, simulated_values: dict, discreet: bool, m
     crypto = [CLS(loaded_assets.get("crypto", {}).get(CLS.LABEL, ())) for CLS in CRYPTO]
     fiat = [CLS(loaded_assets.get("fiat", {}).get(CLS.LABEL, ())) for CLS in FIAT]
     institutions = [CLS(loaded_assets.get("institutions", {}).get(CLS.LABEL, ())) for CLS in INSTITUTIONS]
+    vehicles = [CLS(loaded_assets.get("vehicles", {}).get(CLS.LABEL, ())) for CLS in VEHICLES]
 
     # Fetch prices for all crypto projects in a single request and store them as a class attribute
     # on `CryptoAsset`. This method only needs to be called once to fetch all price data so break
@@ -47,7 +49,7 @@ async def execute(loaded_assets: dict, simulated_values: dict, discreet: bool, m
         for project_name, value in simulated_values.items():
             crypto[0].prices[project_name] = value
 
-    assets = [*bullion, *crypto, *fiat, *institutions]
+    assets = [*bullion, *crypto, *fiat, *institutions, *vehicles]
     total_value = 0
     for asset in assets:
         if await asset.quantity:
@@ -55,7 +57,7 @@ async def execute(loaded_assets: dict, simulated_values: dict, discreet: bool, m
 
     terminal_size = os.get_terminal_size()
 
-    for asset_objs in (bullion, crypto, fiat, institutions):
+    for asset_objs in (bullion, crypto, fiat, institutions, vehicles):
         click.echo("-" * terminal_size.columns)
 
         for asset in sorted(asset_objs):
