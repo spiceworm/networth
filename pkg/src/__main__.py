@@ -58,7 +58,7 @@ async def execute(loaded_assets: dict, simulated_values: dict, discreet: bool, m
     terminal_size = os.get_terminal_size()
 
     for asset_objs in (bullion, crypto, fiat, institutions, vehicles):
-        click.echo("-" * terminal_size.columns)
+        horizontal_divider_shown = False
 
         for asset in sorted(asset_objs):
             if await asset.quantity > 0:
@@ -68,6 +68,11 @@ async def execute(loaded_assets: dict, simulated_values: dict, discreet: bool, m
 
                 if value < min_balance:
                     continue
+
+                # Only print horizontal divider if assets for the current asset class exist
+                if not horizontal_divider_shown:
+                    click.echo("-" * terminal_size.columns)
+                    horizontal_divider_shown = True
 
                 asset_value = "X" if discreet else f"{value:<15,.2f}"
                 portfolio_allocation = f"{value / total_value * 100:.4f}"
