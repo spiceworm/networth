@@ -17,6 +17,7 @@ __all__ = [
     "AdventureGold",
     "Alchemix",
     "Algorand",
+    "Arbitrum",
     "AxieInfinity",
     "Bitcoin",
     "Cardano",
@@ -139,6 +140,12 @@ class Alchemix(EthereumAsset):
 class Algorand(CryptoAsset):
     LABEL = "algorand"
     SYMBOL = "ALGO"
+
+
+class Arbitrum(EthereumAsset):
+    CONTRACT_ADDRESS = "0xb50721bcf8d664c30412cfbc6cf7a15145234ad1"
+    LABEL = "arbitrum"
+    SYMBOL = "ARB"
 
 
 class AxieInfinity(EthereumAsset):
@@ -307,6 +314,7 @@ CRYPTO = [
     AdventureGold,
     Alchemix,
     Algorand,
+    Arbitrum,
     AxieInfinity,
     Bitcoin,
     Cardano,
