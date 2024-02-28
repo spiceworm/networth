@@ -12,6 +12,7 @@ from src.assets.bullion import BULLION
 from src.assets.crypto import CRYPTO
 from src.assets.fiat import FIAT
 from src.assets.institution import INSTITUTIONS
+from src.assets.stocks import STOCKS
 from src.assets.vehicles import VEHICLES
 
 
@@ -32,10 +33,13 @@ log.setLevel(logging.INFO)
 async def execute(loaded_assets: dict, simulated_values: dict, discreet: bool, min_balance: float):
     Asset.SESSION = aiohttp.ClientSession()
 
+    stocks_config = loaded_assets.get("stocks", {})
+
     bullion = [CLS(loaded_assets.get("bullion", {}).get(CLS.LABEL, ())) for CLS in BULLION]
     crypto = [CLS(loaded_assets.get("crypto", {}).get(CLS.LABEL, ())) for CLS in CRYPTO]
     fiat = [CLS(loaded_assets.get("fiat", {}).get(CLS.LABEL, ())) for CLS in FIAT]
     institutions = [CLS(loaded_assets.get("institutions", {}).get(CLS.LABEL, ())) for CLS in INSTITUTIONS]
+    stocks = [obj for obj in STOCKS.from_dict(stocks_config)]
     vehicles = [CLS(loaded_assets.get("vehicles", {}).get(CLS.LABEL, ())) for CLS in VEHICLES]
 
     # Fetch prices for all crypto projects in a single request and store them as a class attribute
@@ -45,11 +49,18 @@ async def execute(loaded_assets: dict, simulated_values: dict, discreet: bool, m
         await project.fetch_prices(*[project.LABEL for project in crypto])
         break
 
+    # Fetch prices for all stocks in a single request and store them as a class attribute
+    # on `StockAsset`. This method only needs to be called once to fetch all price data so break
+    # after calling it on the first instance.
+    for project in stocks:
+        await project.fetch_prices(stocks_config)
+        break
+
     if crypto and simulated_values:
         for project_name, value in simulated_values.items():
             crypto[0].prices[project_name] = value
 
-    assets = [*bullion, *crypto, *fiat, *institutions, *vehicles]
+    assets = [*bullion, *crypto, *fiat, *institutions, *stocks, *vehicles]
     total_value = 0
     for asset in assets:
         if await asset.quantity:
@@ -57,7 +68,7 @@ async def execute(loaded_assets: dict, simulated_values: dict, discreet: bool, m
 
     terminal_size = os.get_terminal_size()
 
-    for asset_objs in (bullion, crypto, fiat, institutions, vehicles):
+    for asset_objs in (bullion, crypto, fiat, institutions, stocks, vehicles):
         horizontal_divider_shown = False
 
         for asset in sorted(asset_objs):
