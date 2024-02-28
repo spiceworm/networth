@@ -101,7 +101,7 @@ async def execute(loaded_assets: dict, simulated_values: dict, discreet: bool, m
                 category_allocation_sum += portfolio_allocation
 
         if show_category:
-            category_sum = f"{category_sum:<15,.2f}"
+            category_sum = "X" if discreet else f"{category_sum:<15,.2f}"
             click.echo(f"{'':>13}: ${click.style(category_sum, fg='blue')} ({category_allocation_sum:.4f}%)")
 
     click.echo("=" * terminal_size.columns)
