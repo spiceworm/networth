@@ -68,10 +68,12 @@ async def execute(loaded_assets: dict, simulated_values: dict, discreet: bool, m
 
     terminal_size = os.get_terminal_size()
 
-    for asset_objs in (bullion, crypto, fiat, institutions, stocks, vehicles):
-        horizontal_divider_shown = False
+    for category in (bullion, crypto, fiat, institutions, stocks, vehicles):
+        show_category = False
 
-        for asset in sorted(asset_objs):
+        category_sum = 0.0
+        category_allocation_sum = 0.0
+        for asset in sorted(category):
             if await asset.quantity > 0:
                 value = await asset.value
                 quantity = await asset.quantity
@@ -81,24 +83,31 @@ async def execute(loaded_assets: dict, simulated_values: dict, discreet: bool, m
                     continue
 
                 # Only print horizontal divider if assets for the current asset class exist
-                if not horizontal_divider_shown:
+                if not show_category:
                     click.echo("-" * terminal_size.columns)
-                    horizontal_divider_shown = True
+                    show_category = True
 
                 asset_value = "X" if discreet else f"{value:<15,.2f}"
-                portfolio_allocation = f"{value / total_value * 100:.4f}"
+                portfolio_allocation = value / total_value * 100
                 asset_quantity = "X" if discreet else f"{quantity:,}"
                 fmt_price = f'{price:,}'
                 msg = (
-                    f"{asset.SYMBOL:>13}: ${asset_value} ({portfolio_allocation}%) "
+                    f"{asset.SYMBOL:>13}: ${asset_value} ({portfolio_allocation:.4f}%) "
                     f'({asset_quantity} @ ${click.style(fmt_price, fg="cyan")})'
                 )
                 click.echo(msg)
 
+                category_sum += value
+                category_allocation_sum += portfolio_allocation
+
+        if show_category:
+            category_sum = f"{category_sum:<15,.2f}"
+            click.echo(f"{'':>13}: ${click.style(category_sum, fg='blue')} ({category_allocation_sum:.4f}%)")
+
     click.echo("=" * terminal_size.columns)
 
     fmt_total_value = "X" if discreet else f"{total_value:,.2f}"
-    click.secho(f"     Networth: ${fmt_total_value}", fg="green")
+    click.secho(f"{'Networth':>13}: ${fmt_total_value}", fg="green")
 
     await Asset.SESSION.close()
 
