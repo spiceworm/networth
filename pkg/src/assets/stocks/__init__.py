@@ -35,5 +35,4 @@ class STOCKS:
                     "fetch_prices": fetch_prices,
                 }
             )
-            quantity = float(config["quantity"])
-            yield _cls([quantity])
+            yield _cls([float(qty) for qty in config["quantity"]])
