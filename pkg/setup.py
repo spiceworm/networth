@@ -7,7 +7,7 @@ setup(
     install_requires=[
         "aiohttp >= 3.8.3",
         "click >= 8.1.3",
-        "grazer @ https://github.com/spiceworm/grazer/tarball/master#egg=0.1.0",
+        "grazer @ https://github.com/spiceworm/grazer/tarball/master#egg=0.1.1",
         "pycoingecko >= 3.1.0",
         "PyYAML >= 6.0",
         "requests >= 2.28.1",
