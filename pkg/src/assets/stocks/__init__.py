@@ -1,8 +1,13 @@
+import logging
+import os
 from typing import Iterable
 
-import grazer
+import finnhub
 
 from .. import Asset
+
+
+log = logging.getLogger()
 
 
 class StockAsset(Asset):
@@ -20,11 +25,17 @@ class STOCKS:
     @classmethod
     def from_dict(cls, d):
         for label, config in d.items():
-            async def fetch_prices(slf, elements) -> None:
+            async def fetch_prices(slf, elements: dict) -> None:
                 if not StockAsset.prices:
-                    for result in grazer.graze(elements=elements):
-                        lbl, price = result.popitem()
-                        StockAsset.prices[lbl] = float(price)
+                    client = finnhub.Client(api_key=os.environ["FINNHUB_API_KEY"])
+                    for symbol, meta in elements.items():
+                        if "value" in meta:
+                            log.debug("Using hardcoded price of %s for %s", meta["value"], symbol)
+                            StockAsset.prices[symbol] = float(meta["value"])
+                        else:
+                            log.debug("Fetching price for %s", symbol)
+                            resp = client.quote(symbol)
+                            StockAsset.prices[symbol] = float(resp["c"])
 
             _cls = type(
                 label,
