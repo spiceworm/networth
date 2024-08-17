@@ -183,7 +183,7 @@ class AssetDetail:
         return total
 
 
-async def execute(loaded_assets: dict, verbose: bool):
+async def execute(loaded_assets: dict, group_by: str, verbose: bool):
     asset_objs = []
     indent = 0
     for name, asset_meta in loaded_assets.items():
@@ -218,8 +218,8 @@ async def execute(loaded_assets: dict, verbose: bool):
 
     terminal_size = os.get_terminal_size()
 
-    objects = sorted(asset_objs, key=lambda o: o.group)
-    for group, objs in itertools.groupby(objects, lambda o: o.group):
+    objects = sorted(asset_objs, key=lambda o: getattr(o, group_by))
+    for group, objs in itertools.groupby(objects, lambda o: getattr(o, group_by)):
         group_banner_margin = int((terminal_size.columns - len(group)) / 2)
         click.echo(f'{"-" * group_banner_margin}{group}{"-" * group_banner_margin}')
 
@@ -260,8 +260,9 @@ async def execute(loaded_assets: dict, verbose: bool):
 @click.option("-e", "--edit-assets", is_flag=True)
 @click.option("-d", "--debug", is_flag=True)
 @click.option("-f", "--file", default="assets.yaml")
+@click.option("-g", "--group-by", default="group", type=click.Choice(["category", "group"]))
 @click.option("-v", "--verbose", is_flag=True)
-def main(edit_assets, debug, file, verbose) -> None:
+def main(edit_assets, debug, file, group_by, verbose) -> None:
     if edit_assets:
         click.edit(editor="vim", filename=file)
 
@@ -273,7 +274,7 @@ def main(edit_assets, debug, file, verbose) -> None:
     with open(file) as f:
         assets = yaml.safe_load(f)
 
-    asyncio.run(execute(assets, verbose))
+    asyncio.run(execute(assets, group_by, verbose))
 
 
 if __name__ == "__main__":
