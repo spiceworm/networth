@@ -2,9 +2,10 @@ from setuptools import setup, find_packages
 
 setup(
     name="networth",
-    author="ecaz.eth",
+    author="spiceworm",
     packages=["src"] + find_packages(),
     install_requires=[
+        "aioetherscan >= 0.9.4",
         "aiohttp >= 3.9.5",
         "click >= 8.1.7",
         "finnhub-python >= 2.4.20",

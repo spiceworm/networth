@@ -1,19 +1,16 @@
 #!/usr/bin/env python
 import asyncio
+import itertools
 import logging
 import os
 
-import aiohttp
 import click
 import yaml
 
-from src.assets import Asset
-from src.assets.bullion import BULLION
-from src.assets.crypto import CRYPTO
-from src.assets.fiat import FIAT
-from src.assets.institution import INSTITUTIONS
-from src.assets.stocks import STOCKS
-from src.assets.vehicles import VEHICLES
+from src.assets import (
+    Asset,
+    AssetDetail,
+)
 
 
 logging.basicConfig(
@@ -25,118 +22,99 @@ logging.basicConfig(
 )
 
 logging.getLogger("urllib3").setLevel(logging.WARNING)
-
 log = logging.getLogger()
-log.setLevel(logging.INFO)
 
 
-async def execute(loaded_assets: dict, simulated_values: dict, discreet: bool, min_balance: float):
-    Asset.SESSION = aiohttp.ClientSession()
+async def execute(loaded_assets: dict, verbose: bool):
+    asset_objs = []
+    indent = 0
+    for name, asset_meta in loaded_assets.items():
+        if len(name) > indent:
+            indent = len(name)
 
-    stocks_config = loaded_assets.get("stocks", {})
+        group = asset_meta["group"]
+        sources = asset_meta["sources"]
+        category = asset_meta["category"]
 
-    bullion = [CLS(loaded_assets.get("bullion", {}).get(CLS.LABEL, ())) for CLS in BULLION]
-    crypto = [CLS(loaded_assets.get("crypto", {}).get(CLS.LABEL, ())) for CLS in CRYPTO]
-    fiat = [CLS(loaded_assets.get("fiat", {}).get(CLS.LABEL, ())) for CLS in FIAT]
-    institutions = [CLS(loaded_assets.get("institutions", {}).get(CLS.LABEL, ())) for CLS in INSTITUTIONS]
-    stocks = [obj for obj in STOCKS.from_dict(stocks_config)]
-    vehicles = [CLS(loaded_assets.get("vehicles", {}).get(CLS.LABEL, ())) for CLS in VEHICLES]
+        if isinstance(category, dict):
+            category_name = category["name"]
+            price = category["price"]
+        else:
+            category_name = category
+            price = 0.0
 
-    # Fetch prices for all crypto projects in a single request and store them as a class attribute
-    # on `CryptoAsset`. This method only needs to be called once to fetch all price data so break
-    # after calling it on the first instance.
-    for project in crypto:
-        await project.fetch_prices(*[project.LABEL for project in crypto])
-        break
+        for source, quantity_or_locator in sources.items():
+            asset = Asset.create(
+                category=category_name,
+                name=name,
+                group=group,
+                source=source,
+                quantity_or_locator=quantity_or_locator,
+                price=price,
+            )
+            asset_objs.append(asset)
 
-    # Fetch prices for all stocks in a single request and store them as a class attribute
-    # on `StockAsset`. This method only needs to be called once to fetch all price data so break
-    # after calling it on the first instance.
-    for project in stocks:
-        await project.fetch_prices(stocks_config)
-        break
-
-    if crypto and simulated_values:
-        for project_name, value in simulated_values.items():
-            crypto[0].prices[project_name] = value
-
-    assets = [*bullion, *crypto, *fiat, *institutions, *stocks, *vehicles]
-    total_value = 0
-    for asset in assets:
-        if await asset.quantity:
-            total_value += await asset.value
+    total_value = 0.0
+    for asset in asset_objs:
+        total_value += await asset.value()
 
     terminal_size = os.get_terminal_size()
 
-    for category in (bullion, crypto, fiat, institutions, stocks, vehicles):
-        show_category = False
+    objects = sorted(asset_objs, key=lambda o: o.group)
+    for group, objs in itertools.groupby(objects, lambda o: o.group):
+        click.echo("-" * terminal_size.columns)
 
-        category_sum = 0.0
-        category_allocation_sum = 0.0
-        for asset in sorted(category):
-            if await asset.quantity > 0:
-                value = await asset.value
-                quantity = await asset.quantity
-                price = await asset.price
+        group_value_sum = 0.0
+        asset_details = {}
+        for name, assets in itertools.groupby(objs, lambda o: o.name):
+            detail = AssetDetail(assets)
+            group_value_sum += await detail.value()
+            asset_details[name] = {
+                "detail": detail,
+                "value": await detail.value(),
+            }
 
-                if value < min_balance:
-                    continue
+        group_allocation_sum = 0.0
+        for name, details in sorted(asset_details.items(), key=lambda o: o[1]["value"]):
+            detail = details["detail"]
+            fmt_price = f"{await detail.price():,}"
+            portfolio_allocation = (await detail.value() / total_value) * 100
+            group_allocation_sum += portfolio_allocation
+            msg = (
+                f"{name:>{indent}}: ${await detail.value():<{indent},.2f} ({portfolio_allocation:.4f}%) "
+                f'({await detail.quantity():,} @ ${click.style(fmt_price, fg="cyan")}) [{detail.assets[0].category}]'
+            )
+            click.echo(msg)
 
-                # Only print horizontal divider if assets for the current asset class exist
-                if not show_category:
-                    click.echo("-" * terminal_size.columns)
-                    show_category = True
+            if verbose:
+                for asset in detail.assets:
+                    click.echo(" " * indent + f"- {asset.source}: {await asset.quantity()}")
 
-                asset_value = "X" if discreet else f"{value:<15,.2f}"
-                portfolio_allocation = value / total_value * 100
-                asset_quantity = "X" if discreet else f"{quantity:,}"
-                fmt_price = f'{price:,}'
-                msg = (
-                    f"{asset.SYMBOL:>13}: ${asset_value} ({portfolio_allocation:.4f}%) "
-                    f'({asset_quantity} @ ${click.style(fmt_price, fg="cyan")})'
-                )
-                click.echo(msg)
-
-                category_sum += value
-                category_allocation_sum += portfolio_allocation
-
-        if show_category:
-            category_sum = "X" if discreet else f"{category_sum:<15,.2f}"
-            click.echo(f"{'':>13}: ${click.style(category_sum, fg='blue')} ({category_allocation_sum:.4f}%)")
+        group_value_sum = f"{group_value_sum:<{indent},.2f}"
+        click.echo(f"{'':>{indent}}: ${click.style(group_value_sum, fg='blue')} ({group_allocation_sum:.4f}%)")
 
     click.echo("=" * terminal_size.columns)
-
-    fmt_total_value = "X" if discreet else f"{total_value:,.2f}"
-    click.secho(f"{'Networth':>13}: ${fmt_total_value}", fg="green")
-
-    await Asset.SESSION.close()
+    click.secho(f"{'Networth':>{indent}}: ${total_value:,.2f}", fg="green")
 
 
 @click.command()
-@click.option("-d", "--discreet", is_flag=True)
-@click.option("-m", "--min-balance", type=float, default=10.0)
-@click.option("-s", "--simulate", type=str)
-@click.option("-u", "--update-assets", is_flag=True)
+@click.option("-e", "--edit-assets", is_flag=True)
+@click.option("-d", "--debug", is_flag=True)
+@click.option("-f", "--file", default="assets.yaml")
 @click.option("-v", "--verbose", is_flag=True)
-@click.option("-z", "--no-fetch", is_flag=True)
-def main(discreet, min_balance, simulate, update_assets, verbose, no_fetch) -> None:
-    simulated_values = {}
+def main(edit_assets, debug, file, verbose) -> None:
+    if edit_assets:
+        click.edit(editor="vim", filename=file)
 
-    if update_assets:
-        click.edit(editor="vim", filename="assets.yaml")
-    if no_fetch:
-        return
-    if verbose:
+    if debug:
         log.setLevel(logging.DEBUG)
-    if simulate:
-        for pair in simulate.split(","):
-            project_name, value = pair.split("=")
-            simulated_values[project_name] = float(value)
+    else:
+        log.setLevel(logging.INFO)
 
-    with open("assets.yaml") as f:
+    with open(file) as f:
         assets = yaml.safe_load(f)
 
-    asyncio.run(execute(assets, simulated_values, discreet, min_balance))
+    asyncio.run(execute(assets, verbose))
 
 
 if __name__ == "__main__":
