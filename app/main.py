@@ -8,6 +8,7 @@ import os
 import aioetherscan
 import aiohttp
 import click
+import decouple
 import pycoingecko
 import yaml
 
@@ -22,6 +23,10 @@ logging.basicConfig(
 
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 log = logging.getLogger()
+
+
+ETHERSCAN_API_KEY = decouple.config("ETHERSCAN_API_KEY")
+FINNHUB_API_KEY = decouple.config("FINNHUB_API_KEY")
 
 
 @functools.total_ordering
@@ -98,8 +103,7 @@ class Crypto(AssetBase):
 
     async def quantity(self):
         if self.address and not self._quantity:
-            api_key = os.getenv("ETHERSCAN_API_KEY")
-            client = aioetherscan.Client(api_key)
+            client = aioetherscan.Client(ETHERSCAN_API_KEY)
             try:
                 log.debug("Etherscan API GET -> %s", self.address)
                 balance = await client.account.balance(self.address)
@@ -122,14 +126,13 @@ class Stock(AssetBase):
     async def price(self):
         if self.name in Stock.PRICES:
             return Stock.PRICES[self.name]
-        api_key = os.getenv("FINNHUB_API_KEY")
         base_url = "https://api.finnhub.io/api/v1"
         headers = {
             "Accept": "application/json",
             "User-Agent": "finnhub/python",
         }
         async with aiohttp.ClientSession(headers=headers) as session:
-            params = {"symbol": self.name, "token": api_key}
+            params = {"symbol": self.name, "token": FINNHUB_API_KEY}
             log.debug("Finnhub API -> %s", self.name)
             async with session.get(f"{base_url}/quote", params=params) as resp:
                 try:
