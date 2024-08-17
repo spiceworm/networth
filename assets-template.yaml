@@ -1,0 +1,45 @@
+bitcoin:
+  group: "cryptocurrency"
+  category: "cryptocurrency"
+  sources:
+    my-ledger: 1.23
+
+ethereum:
+  group: "cryptocurrency"
+  category: "cryptocurrency"
+  sources:
+    coinbase: 2.34
+    my-eth-address: '0xYOUR-ETH-ADDRESS'
+
+my-bank:
+  group: "cash"
+  category:
+    name: "constant"
+    price: 1.00
+  sources:
+    checking: 1_033
+    savings: 4_836
+
+cash:
+  group: "cash"
+  category:
+    name: "constant"
+    price: 1.00
+  sources:
+    my-wallet: 44
+    safe: 123
+
+cars:
+  group: "vehicles"
+  category:
+    name: "constant"
+    price: 1.00
+  sources:
+    honda-civic: 3_000
+
+AAPL:
+  group: "stock"
+  category: "stock"
+  sources:
+    schwab/taxable: 34
+
