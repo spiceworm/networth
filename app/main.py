@@ -31,7 +31,7 @@ class AssetBase:
         self.group = group
         self.source = source
         self._quantity = quantity
-        self._price = price
+        self._price = float(price)
         self._value = 0.0
 
     def __eq__(self, other) -> bool:
@@ -69,6 +69,9 @@ class Crypto(AssetBase):
 
     def __init__(self, name, group, source, quantity_or_address, price):
         super().__init__(name, group, source, quantity_or_address, price)
+
+        if self._price:
+            Crypto.PRICES[self.name] = self._price
 
         if isinstance(quantity_or_address, str):
             self.address = quantity_or_address
@@ -109,6 +112,12 @@ class Crypto(AssetBase):
 
 class Stock(AssetBase):
     PRICES = {}
+
+    def __init__(self, name, group, source, quantity, price):
+        super().__init__(name, group, source, quantity, price)
+
+        if self._price:
+            Stock.PRICES[self.name] = self._price
 
     async def price(self):
         if self.name in Stock.PRICES:
