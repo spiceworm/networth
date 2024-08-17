@@ -220,7 +220,8 @@ async def execute(loaded_assets: dict, verbose: bool):
 
     objects = sorted(asset_objs, key=lambda o: o.group)
     for group, objs in itertools.groupby(objects, lambda o: o.group):
-        click.echo("-" * terminal_size.columns)
+        group_banner_margin = int((terminal_size.columns - len(group)) / 2)
+        click.echo(f'{"-" * group_banner_margin}{group}{"-" * group_banner_margin}')
 
         group_value_sum = 0.0
         asset_details = {}
