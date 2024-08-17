@@ -94,25 +94,29 @@ class Crypto(AssetBase):
 
 
 class Stock(AssetBase):
+    PRICES = {}
+
     async def price(self):
-        if not self._price:
-            api_key = os.getenv("FINNHUB_API_KEY")
-            base_url = "https://api.finnhub.io/api/v1"
-            headers = {
-                "Accept": "application/json",
-                "User-Agent": "finnhub/python",
-            }
-            async with aiohttp.ClientSession(headers=headers) as session:
-                params = {"symbol": self.name, "token": api_key}
-                log.debug("Finnhub API -> %s", self.name)
-                async with session.get(f"{base_url}/quote", params=params) as resp:
-                    try:
-                        jsn = await resp.json()
-                    except aiohttp.client_exceptions.ContentTypeError:
-                        log.exception(f"Error: {await resp.text()}")
-                    else:
-                        log.debug("Finnhub API <- %s", jsn)
-                        self._price = float(jsn["c"])
+        if self.name in Stock.PRICES:
+            return Stock.PRICES[self.name]
+        api_key = os.getenv("FINNHUB_API_KEY")
+        base_url = "https://api.finnhub.io/api/v1"
+        headers = {
+            "Accept": "application/json",
+            "User-Agent": "finnhub/python",
+        }
+        async with aiohttp.ClientSession(headers=headers) as session:
+            params = {"symbol": self.name, "token": api_key}
+            log.debug("Finnhub API -> %s", self.name)
+            async with session.get(f"{base_url}/quote", params=params) as resp:
+                try:
+                    jsn = await resp.json()
+                except aiohttp.client_exceptions.ContentTypeError:
+                    log.exception(f"Error: {await resp.text()}")
+                else:
+                    log.debug("Finnhub API <- %s", jsn)
+                    self._price = float(jsn["c"])
+                    Stock.PRICES[self.name] = self._price
         return await super().price()
 
 
