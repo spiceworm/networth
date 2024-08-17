@@ -183,7 +183,7 @@ class AssetDetail:
         return total
 
 
-async def execute(loaded_assets: dict, group_by: str, verbose: bool):
+async def execute(loaded_assets: dict, debug: bool, group_by: str, verbose: bool):
     asset_objs = []
     indent = 0
     for name, asset_meta in loaded_assets.items():
@@ -213,8 +213,14 @@ async def execute(loaded_assets: dict, group_by: str, verbose: bool):
             asset_objs.append(asset)
 
     total_value = 0.0
-    for asset in asset_objs:
-        total_value += await asset.value()
+
+    if debug:
+        for asset in asset_objs:
+            total_value += await asset.value()
+    else:
+        with click.progressbar(asset_objs) as progress_bar:
+            for asset in progress_bar:
+                total_value += await asset.value()
 
     terminal_size = os.get_terminal_size()
 
@@ -274,7 +280,7 @@ def main(edit_assets, debug, file, group_by, verbose) -> None:
     with open(file) as f:
         assets = yaml.safe_load(f)
 
-    asyncio.run(execute(assets, group_by, verbose))
+    asyncio.run(execute(assets, debug, group_by, verbose))
 
 
 if __name__ == "__main__":
