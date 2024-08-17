@@ -6,10 +6,12 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         vim
 
-RUN pip install --upgrade pip
+COPY ./app/requirements.txt /tmp/
 
-COPY pkg/ /app/
+RUN pip install --upgrade pip \
+    && pip install -r /tmp/requirements.txt \
+    && rm /tmp/requirements.txt
 
-RUN pip install .
+COPY ./app /app
 
-ENTRYPOINT ["networth"]
+ENTRYPOINT ["python", "/app/main.py"]
