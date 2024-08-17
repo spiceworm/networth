@@ -1,4 +1,6 @@
 ## Networth
+Define assets in ~/.networth/assets.yaml using assets-template.yaml as a guide.
+
 ### Installation
 #### Create file containing API credentials
 ```bash
@@ -20,7 +22,7 @@ pushd /path/to/networth/ > /dev/null
 docker build . -t networth &> /dev/null
 
 docker run --rm -it \
-        -v `pwd`/assets.yaml:/app/assets.yaml \
+        -v ~/.networth/assets.yaml:/app/assets.yaml \
         -e ETHERSCAN_API_KEY=$(grep ETHERSCAN_API_KEY ~/.networth/credentials | cut -d= -f2) \
         -e FINNHUB_API_KEY=$(grep FINNHUB_API_KEY ~/.networth/credentials | cut -d= -f2) \
         networth "$@"
@@ -28,7 +30,6 @@ docker run --rm -it \
 popd > /dev/null
 EOF
 ```
-
 
 #### Set ownership and permissions
 ```bash
