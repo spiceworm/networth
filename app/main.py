@@ -265,7 +265,7 @@ async def execute(loaded_assets: dict, debug: bool, group_by: str, verbose: bool
 @click.command()
 @click.option("-e", "--edit-assets", is_flag=True)
 @click.option("-d", "--debug", is_flag=True)
-@click.option("-f", "--file", default="assets.yaml")
+@click.option("-f", "--file", default="assets.yaml", type=click.File())
 @click.option("-g", "--group-by", default="group", type=click.Choice(["category", "group"]))
 @click.option("-v", "--verbose", is_flag=True)
 def main(edit_assets, debug, file, group_by, verbose) -> None:
@@ -277,9 +277,7 @@ def main(edit_assets, debug, file, group_by, verbose) -> None:
     else:
         log.setLevel(logging.INFO)
 
-    with open(file) as f:
-        assets = yaml.safe_load(f)
-
+    assets = yaml.safe_load(file)
     asyncio.run(execute(assets, debug, group_by, verbose))
 
 
