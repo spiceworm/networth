@@ -262,7 +262,7 @@ async def execute(loaded_assets: dict, debug: bool, group_by: str, verbose: bool
     click.secho(f"{'Networth':>{indent}}: ${total_value:,.2f}", fg="green")
 
 
-@click.command()
+@click.command(context_settings={'show_default': True})
 @click.option("-e", "--edit-assets", is_flag=True)
 @click.option("-d", "--debug", is_flag=True)
 @click.option("-f", "--file", default="assets.yaml", type=click.File())
