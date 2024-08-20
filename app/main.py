@@ -66,10 +66,11 @@ class AssetBase:
 
 
 class Constant(AssetBase):
-    pass
+    COLOR = "bright_green"
 
 
 class Crypto(AssetBase):
+    COLOR = "bright_yellow"
     PRICES = {}
 
     def __init__(self, name, group, source, quantity_or_address, price):
@@ -115,6 +116,7 @@ class Crypto(AssetBase):
 
 
 class Stock(AssetBase):
+    COLOR = "bright_cyan"
     PRICES = {}
 
     def __init__(self, name, group, source, quantity, price):
@@ -166,9 +168,20 @@ class AssetDetail:
         self.assets = list(assets)
         self.name = self.assets[0].name
 
+    def fmt_name(self, indent) -> str:
+        return click.style(self.name.rjust(indent), fg=self.assets[0].COLOR, reverse=True)
+
+    async def fmt_price(self) -> str:
+        return click.style(f"${await self.price():,}", fg="bright_blue", bold=True)
+
+    async def fmt_quantity(self) -> str:
+        return f"{await self.quantity():,}"
+
+    async def fmt_value(self, indent) -> str:
+        return f"${await self.value():<{indent},.2f}"
+
     async def price(self):
-        for asset in self.assets:
-            return await asset.price()
+        return await self.assets[0].price()
 
     async def quantity(self):
         total = 0.0
@@ -242,24 +255,23 @@ async def execute(loaded_assets: dict, debug: bool, group_by: str, verbose: bool
         group_allocation_sum = 0.0
         for name, details in sorted(asset_details.items(), key=lambda o: o[1]["value"]):
             detail = details["detail"]
-            fmt_price = f"{await detail.price():,}"
             portfolio_allocation = (await detail.value() / total_value) * 100
             group_allocation_sum += portfolio_allocation
             msg = (
-                f"{name:>{indent}}: ${await detail.value():<{indent},.2f} ({portfolio_allocation:.4f}%) "
-                f'({await detail.quantity():,} @ ${click.style(fmt_price, fg="cyan")}) [{detail.assets[0].category}]'
+                f"{detail.fmt_name(indent)}: {await detail.fmt_value(indent)} ({portfolio_allocation:.4f}%) "
+                f'({await detail.fmt_quantity()} @ {await detail.fmt_price()})'
             )
             click.echo(msg)
 
             if verbose:
                 for asset in detail.assets:
-                    click.echo(" " * indent + f"- {asset.source}: {await asset.quantity()}")
+                    click.echo(f"{'':>{indent}}- {asset.source}: {await asset.quantity()}")
 
         group_value_sum = f"{group_value_sum:<{indent},.2f}"
-        click.echo(f"{'':>{indent}}: ${click.style(group_value_sum, fg='blue')} ({group_allocation_sum:.4f}%)")
+        click.echo(f"{'':>{indent}}: ${click.style(group_value_sum, fg='bright_green')} ({group_allocation_sum:.4f}%)")
 
     click.echo("=" * terminal_size.columns)
-    click.secho(f"{'Networth':>{indent}}: ${total_value:,.2f}", fg="green")
+    click.secho(f"{'Networth':>{indent}}: ${total_value:,.2f}", fg="bright_green", bold=True)
 
 
 @click.command(context_settings={'show_default': True})
