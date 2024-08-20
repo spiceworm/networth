@@ -270,7 +270,7 @@ async def execute(loaded_assets: dict, debug: bool, group_by: str, verbose: bool
 @click.option("-v", "--verbose", is_flag=True)
 def main(edit_assets, debug, file, group_by, verbose) -> None:
     if edit_assets:
-        click.edit(editor="vim", filename=file)
+        click.edit(editor="vim", filename=file.name)
 
     if debug:
         log.setLevel(logging.DEBUG)
