@@ -1,7 +1,7 @@
 aioetherscan >= 0.9.4
-aiohttp >= 3.11.2
+aiohttp >= 3.11.11
 click >= 8.1.7
-finnhub-python >= 2.4.21
+finnhub-python >= 2.4.22
 pycoingecko >= 3.2.0
 python-decouple >= 3.8
 PyYAML >= 6.0.2
