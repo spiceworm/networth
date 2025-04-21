@@ -4,6 +4,7 @@ import functools
 import itertools
 import logging
 import os
+from typing import Tuple
 
 import aioetherscan
 import aiohttp
@@ -196,7 +197,7 @@ class AssetDetail:
         return total
 
 
-async def execute(loaded_assets: dict, debug: bool, group_by: str, verbose: bool):
+async def execute(loaded_assets: dict, debug: bool, excluded_groups: Tuple[str], group_by: str, verbose: bool):
     asset_objs = []
     indent = 0
     for name, asset_meta in loaded_assets.items():
@@ -206,6 +207,9 @@ async def execute(loaded_assets: dict, debug: bool, group_by: str, verbose: bool
         group = asset_meta["group"]
         sources = asset_meta["sources"]
         category = asset_meta["category"]
+
+        if group in excluded_groups:
+            continue
 
         if isinstance(category, dict):
             category_name = category["name"]
@@ -275,12 +279,13 @@ async def execute(loaded_assets: dict, debug: bool, group_by: str, verbose: bool
 
 
 @click.command(context_settings={'show_default': True})
-@click.option("-e", "--edit-assets", is_flag=True)
 @click.option("-d", "--debug", is_flag=True)
+@click.option("-e", "--edit-assets", is_flag=True)
+@click.option("-X", "--exclude-group", "excluded_groups", multiple=True, type=click.Choice(["cryptocurrency", "constant", "stock"]))
 @click.option("-f", "--file", default="assets.yaml", type=click.File())
 @click.option("-g", "--group-by", default="group", type=click.Choice(["category", "group"]))
 @click.option("-v", "--verbose", is_flag=True)
-def main(edit_assets, debug, file, group_by, verbose) -> None:
+def main(debug, edit_assets, excluded_groups, file, group_by, verbose) -> None:
     if edit_assets:
         click.edit(editor="vim", filename=file.name)
 
@@ -290,7 +295,7 @@ def main(edit_assets, debug, file, group_by, verbose) -> None:
         log.setLevel(logging.INFO)
 
     assets = yaml.safe_load(file)
-    asyncio.run(execute(assets, debug, group_by, verbose))
+    asyncio.run(execute(assets, debug, excluded_groups, group_by, verbose))
 
 
 if __name__ == "__main__":
