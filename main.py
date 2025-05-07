@@ -278,23 +278,47 @@ async def execute(loaded_assets: dict, debug: bool, excluded_groups: Tuple[str],
     click.secho(f"{'Networth':>{indent}}: ${total_value:,.2f}", fg="bright_green", bold=True)
 
 
+class DynamicGroupChoice(click.ParamType):
+    name = "group"
+    available_groups = set()
+
+    def __init__(self, assets_path: str):
+        try:
+            with open(assets_path) as f:
+                assets = yaml.safe_load(f)
+        except Exception:
+            # Failed to load groups for help - will validate at runtime
+            pass
+        else:
+            self.available_groups = sorted({asset_meta["group"] for asset_meta in assets.values()})
+
+    def convert(self, value, param, ctx):
+        if value not in self.available_groups:
+            self.fail(f"Invalid group: {value}. Available groups: {', '.join(sorted(self.available_groups))}", param, ctx)
+        else:
+            return value
+
+    def get_metavar(self, param):
+        return f"[{', '.join(self.available_groups)}]" if self.available_groups else "GROUP"
+
+
 @click.command(context_settings={'show_default': True})
 @click.option("-d", "--debug", is_flag=True)
 @click.option("-e", "--edit-assets", is_flag=True)
-@click.option("-X", "--exclude-group", "excluded_groups", multiple=True, type=click.Choice(["cryptocurrency", "constant", "stock"]))
-@click.option("-f", "--file", default="assets.yaml", type=click.File())
+@click.option("-X", "--exclude-group", "excluded_groups", multiple=True, type=DynamicGroupChoice("assets.yaml"))
+@click.option("-f", "--assets-file", default="assets.yaml", is_eager=True, type=click.File())
 @click.option("-g", "--group-by", default="group", type=click.Choice(["category", "group"]))
 @click.option("-v", "--verbose", is_flag=True)
-def main(debug, edit_assets, excluded_groups, file, group_by, verbose) -> None:
+def main(debug, edit_assets, excluded_groups, assets_file, group_by, verbose) -> None:
     if edit_assets:
-        click.edit(editor="vim", filename=file.name)
+        click.edit(editor="vim", filename=assets_file.name)
 
     if debug:
         log.setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.INFO)
 
-    assets = yaml.safe_load(file)
+    assets = yaml.safe_load(assets_file)
     asyncio.run(execute(assets, debug, excluded_groups, group_by, verbose))
 
 
