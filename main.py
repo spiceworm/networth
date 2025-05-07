@@ -197,6 +197,15 @@ class AssetDetail:
         return total
 
 
+def get_color_for_sum(value: float) -> str:
+    if value > 0.0:
+        return "bright_green"
+    elif value < 0.0:
+        return "red"
+    else:
+        return "white"
+
+
 async def execute(loaded_assets: dict, debug: bool, excluded_groups: Tuple[str], group_by: str, verbose: bool):
     asset_objs = []
     indent = 0
@@ -271,11 +280,11 @@ async def execute(loaded_assets: dict, debug: bool, excluded_groups: Tuple[str],
                 for asset in detail.assets:
                     click.echo(f"{'':>{indent}}- {asset.source}: {await asset.quantity()}")
 
-        group_value_sum = f"{group_value_sum:<{indent},.2f}"
-        click.echo(f"{'':>{indent}}: ${click.style(group_value_sum, fg='bright_green')} ({group_allocation_sum:.4f}%)")
+        group_value_sum_str = f"{group_value_sum:<{indent},.2f}"
+        click.echo(f"{'':>{indent}}: ${click.style(group_value_sum_str, fg=get_color_for_sum(group_value_sum))} ({group_allocation_sum:.4f}%)")
 
     click.echo("=" * terminal_size.columns)
-    click.secho(f"{'Networth':>{indent}}: ${total_value:,.2f}", fg="bright_green", bold=True)
+    click.secho(f"{'Networth':>{indent}}: ${total_value:,.2f}", fg=get_color_for_sum(total_value), bold=True)
 
 
 class DynamicGroupChoice(click.ParamType):
@@ -303,12 +312,12 @@ class DynamicGroupChoice(click.ParamType):
 
 
 @click.command(context_settings={'show_default': True})
-@click.option("-d", "--debug", is_flag=True)
-@click.option("-e", "--edit-assets", is_flag=True)
-@click.option("-X", "--exclude-group", "excluded_groups", multiple=True, type=DynamicGroupChoice("assets.yaml"))
-@click.option("-f", "--assets-file", default="assets.yaml", is_eager=True, type=click.File())
-@click.option("-g", "--group-by", default="group", type=click.Choice(["category", "group"]))
-@click.option("-v", "--verbose", is_flag=True)
+@click.option("-d", "--debug", is_flag=True, help="Enable debug mode.")
+@click.option("-e", "--edit-assets", is_flag=True, help="Edit the assets YAML file.")
+@click.option("-X", "--exclude-group", "excluded_groups", multiple=True, type=DynamicGroupChoice("assets.yaml"), help="Exclude group from output.")
+@click.option("-f", "--assets-file", default="assets.yaml", is_eager=True, type=click.File(), help="Path to the assets YAML file.")
+@click.option("-g", "--group-by", default="group", type=click.Choice(["category", "group"]), help="Group by category or group.")
+@click.option("-v", "--verbose", is_flag=True, help="Show detailed breakdown of each asset.")
 def main(debug, edit_assets, excluded_groups, assets_file, group_by, verbose) -> None:
     if edit_assets:
         click.edit(editor="vim", filename=assets_file.name)
