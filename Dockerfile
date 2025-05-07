@@ -1,4 +1,5 @@
 FROM python:3.13.2-bookworm
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
@@ -6,12 +7,19 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         vim
 
-COPY ./app/requirements.txt /tmp/
+COPY ./uv.lock /app/
 
-RUN pip install --upgrade pip \
-    && pip install -r /tmp/requirements.txt \
-    && rm /tmp/requirements.txt
+# Enable bytecode compilation
+ENV UV_COMPILE_BYTECODE=1
 
-COPY ./app /app
+# Copy from the cache instead of linking since it's a mounted volume
+ENV UV_LINK_MODE=copy
 
-ENTRYPOINT ["python", "/app/main.py"]
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+     uv sync --frozen --no-dev
+
+COPY . /app
+
+ENTRYPOINT ["uv", "run", "python", "/app/main.py"]

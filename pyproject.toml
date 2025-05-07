@@ -1,3 +1,17 @@
+[project]
+name = "networth"
+version = "0.2.3"
+requires-python = ">=3.13"
+dependencies = [
+    "aioetherscan>=0.9.4",
+    "aiohttp>=3.11.18",
+    "click>=8.1.8",
+    "finnhub-python>=2.4.23",
+    "pycoingecko>=3.2.0",
+    "python-decouple>=3.8",
+    "pyyaml>=6.0.2",
+]
+
 [tool.black]
 line-length = 120
 target-version = ['py313']
