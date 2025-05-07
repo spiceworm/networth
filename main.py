@@ -47,9 +47,7 @@ class AssetBase:
         return self._value < other._value
 
     def __repr__(self):
-        return (
-            f"{self.__class__.__name__}({self.name=}, {self.group=}, {self.source=}, {self._quantity=}, {self._price=})"
-        )
+        return f"{self.__class__.__name__}({self.name=}, {self.group=}, {self.source=}, {self._quantity=}, {self._price=})"
 
     async def price(self) -> float:
         return float(self._price)
@@ -272,7 +270,7 @@ async def execute(loaded_assets: dict, debug: bool, excluded_groups: Tuple[str],
             group_allocation_sum += portfolio_allocation
             msg = (
                 f"{detail.fmt_name(indent)}: {await detail.fmt_value(indent)} ({portfolio_allocation:.4f}%) "
-                f'({await detail.fmt_quantity()} @ {await detail.fmt_price()})'
+                f"({await detail.fmt_quantity()} @ {await detail.fmt_price()})"
             )
             click.echo(msg)
 
@@ -311,10 +309,17 @@ class DynamicGroupChoice(click.ParamType):
         return f"[{', '.join(self.available_groups)}]" if self.available_groups else "GROUP"
 
 
-@click.command(context_settings={'show_default': True})
+@click.command(context_settings={"show_default": True})
 @click.option("-d", "--debug", is_flag=True, help="Enable debug mode.")
 @click.option("-e", "--edit-assets", is_flag=True, help="Edit the assets YAML file.")
-@click.option("-X", "--exclude-group", "excluded_groups", multiple=True, type=DynamicGroupChoice("assets.yaml"), help="Exclude group from output.")
+@click.option(
+    "-X",
+    "--exclude-group",
+    "excluded_groups",
+    multiple=True,
+    type=DynamicGroupChoice("assets.yaml"),
+    help="Exclude group from output.",
+)
 @click.option("-f", "--assets-file", default="assets.yaml", is_eager=True, type=click.File(), help="Path to the assets YAML file.")
 @click.option("-g", "--group-by", default="group", type=click.Choice(["category", "group"]), help="Group by category or group.")
 @click.option("-v", "--verbose", is_flag=True, help="Show detailed breakdown of each asset.")
