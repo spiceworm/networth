@@ -305,7 +305,7 @@ class DynamicGroupChoice(click.ParamType):
         else:
             return value
 
-    def get_metavar(self, param):
+    def get_metavar(self, param, ctx):
         return f"[{', '.join(self.available_groups)}]" if self.available_groups else "GROUP"
 
 
