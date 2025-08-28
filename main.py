@@ -7,10 +7,12 @@ import os
 from typing import Tuple
 
 import aioetherscan
+from aioetherscan.exceptions import EtherscanClientApiError
 import aiohttp
 import click
 import decouple
 import pycoingecko
+from tenacity import AsyncRetrying, RetryError, retry_if_exception_type, stop_after_attempt
 import yaml
 
 
@@ -104,9 +106,18 @@ class Crypto(AssetBase):
     async def quantity(self):
         if self.address and not self._quantity:
             client = aioetherscan.Client(ETHERSCAN_API_KEY)
+            log.debug("Etherscan API GET -> %s", self.address)
             try:
-                log.debug("Etherscan API GET -> %s", self.address)
-                balance = await client.account.balance(self.address)
+                async for attempt in AsyncRetrying(
+                    retry=retry_if_exception_type(EtherscanClientApiError),
+                    stop=stop_after_attempt(3),
+                ):
+                    with attempt:
+                        balance = await client.account.balance(self.address)
+            except RetryError:
+                log.debug("Retrying Etherscan API")
+                pass
+            else:
                 log.debug("Etherscan API GET <- %s", balance)
                 self._quantity = int(balance) * 10**-18
             finally:
