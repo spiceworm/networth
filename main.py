@@ -34,8 +34,9 @@ FINNHUB_API_KEY = decouple.config("FINNHUB_API_KEY")
 
 @functools.total_ordering
 class AssetBase:
-    def __init__(self, name, group, source, quantity, price):
+    def __init__(self, name, denomination, group, source, quantity, price):
         self.name = name
+        self.denomination = denomination
         self.group = group
         self.source = source
         self._quantity = quantity
@@ -49,7 +50,7 @@ class AssetBase:
         return self._value < other._value
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.name=}, {self.group=}, {self.source=}, {self._quantity=}, {self._price=})"
+        return f"{self.__class__.__name__}({self.name=}, {self.denomination=}, {self.group=}, {self.source=}, {self._quantity=}, {self._price=})"
 
     async def price(self) -> float:
         return float(self._price)
@@ -74,8 +75,8 @@ class Crypto(AssetBase):
     COLOR = "bright_yellow"
     PRICES = {}
 
-    def __init__(self, name, group, source, quantity_or_address, price):
-        super().__init__(name, group, source, quantity_or_address, price)
+    def __init__(self, name, denomination, group, source, quantity_or_address, price):
+        super().__init__(name, denomination, group, source, quantity_or_address, price)
 
         if self._price:
             Crypto.PRICES[self.name] = self._price
@@ -90,7 +91,7 @@ class Crypto(AssetBase):
     def __repr__(self):
         if self.address is None:
             return super().__repr__()
-        return f"{self.__class__.__name__}({self.name=}, {self.group=}, {self.source=}, {self.address=:.6}...)"
+        return f"{self.__class__.__name__}({self.name=}, {self.denomination=}, {self.group=}, {self.source=}, {self.address=:.6}...)"
 
     async def price(self):
         if self.name in Crypto.PRICES:
@@ -129,8 +130,8 @@ class Stock(AssetBase):
     COLOR = "bright_cyan"
     PRICES = {}
 
-    def __init__(self, name, group, source, quantity, price):
-        super().__init__(name, group, source, quantity, price)
+    def __init__(self, name, denomination, group, source, quantity, price):
+        super().__init__(name, denomination, group, source, quantity, price)
 
         if self._price:
             Stock.PRICES[self.name] = self._price
@@ -160,14 +161,14 @@ class Stock(AssetBase):
 
 class Asset:
     @classmethod
-    def create(cls, category, name, group, source, quantity_or_locator, price):
+    def create(cls, category, name, denomination, group, source, quantity_or_locator, price):
         match category:
             case "cryptocurrency":
-                obj = Crypto(name, group, source, quantity_or_locator, price)
+                obj = Crypto(name, denomination, group, source, quantity_or_locator, price)
             case "constant":
-                obj = Constant(name, group, source, quantity_or_locator, price)
+                obj = Constant(name, denomination, group, source, quantity_or_locator, price)
             case "stock":
-                obj = Stock(name, group, source, quantity_or_locator, price)
+                obj = Stock(name, denomination, group, source, quantity_or_locator, price)
             case _:
                 raise ValueError(f"Unknown asset category {category}")
         return obj
@@ -177,6 +178,7 @@ class AssetDetail:
     def __init__(self, assets):
         self.assets = list(assets)
         self.name = self.assets[0].name
+        self.denomination = self.assets[0].denomination
 
     def fmt_name(self, indent) -> str:
         return click.style(self.name.rjust(indent), fg=self.assets[0].COLOR, reverse=True)
@@ -185,7 +187,7 @@ class AssetDetail:
         return click.style(f"${await self.price():,}", fg="bright_blue", bold=True)
 
     async def fmt_quantity(self) -> str:
-        return f"{await self.quantity():,}"
+        return f"{await self.quantity():,} {self.denomination}"
 
     async def fmt_value(self, indent) -> str:
         return f"${await self.value():<{indent},.2f}"
@@ -222,6 +224,7 @@ async def execute(loaded_assets: dict, debug: bool, excluded_groups: Tuple[str],
         if len(name) > indent:
             indent = len(name)
 
+        denomination = asset_meta["denomination"]
         group = asset_meta["group"]
         sources = asset_meta["sources"]
         category = asset_meta["category"]
@@ -240,6 +243,7 @@ async def execute(loaded_assets: dict, debug: bool, excluded_groups: Tuple[str],
             asset = Asset.create(
                 category=category_name,
                 name=name,
+                denomination=denomination,
                 group=group,
                 source=source,
                 quantity_or_locator=quantity_or_locator,
@@ -287,7 +291,7 @@ async def execute(loaded_assets: dict, debug: bool, excluded_groups: Tuple[str],
 
             if verbose:
                 for asset in detail.assets:
-                    click.echo(f"{'':>{indent}}- {asset.source}: {await asset.quantity()}")
+                    click.echo(f"{'':>{indent}}- {asset.source}: {await asset.quantity():,} {asset.denomination}")
 
         group_value_sum_str = f"{group_value_sum:<{indent},.2f}"
         click.echo(f"{'':>{indent}}: ${click.style(group_value_sum_str, fg=get_color_for_sum(group_value_sum))} ({group_allocation_sum:.4f}%)")

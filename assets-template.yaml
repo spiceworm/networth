@@ -1,10 +1,12 @@
 bitcoin:
+  denomination: "BTC"
   group: "cryptocurrency"
   category: "cryptocurrency"
   sources:
     my-ledger: 1.23
 
 ethereum:
+  denomination: "ETH"
   group: "cryptocurrency"
   category: "cryptocurrency"
   sources:
@@ -12,6 +14,7 @@ ethereum:
     my-eth-address: '0xYOUR-ETH-ADDRESS'
 
 my-bank:
+  denomination: "USD"
   group: "cash"
   category:
     name: "constant"
@@ -21,6 +24,7 @@ my-bank:
     savings: 4_836
 
 cash:
+  denomination: "USD"
   group: "cash"
   category:
     name: "constant"
@@ -30,6 +34,7 @@ cash:
     safe: 123
 
 cars:
+  denomination: "USD"
   group: "vehicles"
   category:
     name: "constant"
@@ -38,6 +43,7 @@ cars:
     honda-civic: 3_000
 
 AAPL:
+  denomination: "shares"
   group: "stock"
   category: "stock"
   sources:
