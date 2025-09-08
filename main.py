@@ -1,18 +1,15 @@
 #!/usr/bin/env python
-import asyncio
 import functools
 import itertools
 import logging
 import os
 from typing import Tuple
 
-import aioetherscan
-from aioetherscan.exceptions import EtherscanClientApiError
-import aiohttp
 import click
 import decouple
 import pycoingecko
-from tenacity import AsyncRetrying, RetryError, retry_if_exception_type, stop_after_attempt
+import requests
+from tenacity import RetryError, Retrying, retry_if_exception_type, stop_after_attempt
 import yaml
 
 
@@ -52,18 +49,18 @@ class AssetBase:
     def __repr__(self):
         return f"{self.__class__.__name__}({self.name=}, {self.denomination=}, {self.group=}, {self.source=}, {self._quantity=}, {self._price=})"
 
-    async def price(self) -> float:
+    def price(self) -> float:
         return float(self._price)
 
     @property
     def category(self):
         return self.__class__.__name__.lower()
 
-    async def quantity(self) -> float:
+    def quantity(self) -> float:
         return float(self._quantity)
 
-    async def value(self) -> float:
-        self._value = float(await self.price()) * float(await self.quantity())
+    def value(self) -> float:
+        self._value = float(self.price()) * float(self.quantity())
         return self._value
 
 
@@ -93,7 +90,7 @@ class Crypto(AssetBase):
             return super().__repr__()
         return f"{self.__class__.__name__}({self.name=}, {self.denomination=}, {self.group=}, {self.source=}, {self.address=:.6}...)"
 
-    async def price(self):
+    def price(self):
         if self.name in Crypto.PRICES:
             return Crypto.PRICES[self.name]
         client = pycoingecko.CoinGeckoAPI()
@@ -102,28 +99,40 @@ class Crypto(AssetBase):
         log.debug("Coingecko API GET <- %s", retval)
         self._price = float(retval[self.name]["usd"])
         Crypto.PRICES[self.name] = self._price
-        return await super().price()
+        return super().price()
 
-    async def quantity(self):
+    def quantity(self):
         if self.address and not self._quantity:
-            client = aioetherscan.Client(ETHERSCAN_API_KEY)
             log.debug("Etherscan API GET -> %s", self.address)
             try:
-                async for attempt in AsyncRetrying(
-                    retry=retry_if_exception_type(EtherscanClientApiError),
-                    stop=stop_after_attempt(3),
-                ):
-                    with attempt:
-                        balance = await client.account.balance(self.address)
+                ## Leaving this in so I can add it back once I hit whatever exceptions were being thrown
+                ## when this was implemented using the async etherscan package. Maybe a rate limit error?
+                # for attempt in Retrying(
+                #     retry=retry_if_exception_type(requests.exceptions.RequestException),
+                #     stop=stop_after_attempt(3),
+                # ):
+                #     with attempt:
+                resp = requests.get(
+                    "https://api.etherscan.io/v2/api",
+                    params={
+                        "chainid": "1",
+                        "module": "account",
+                        "action": "balance",
+                        "address": self.address,
+                        "tag": "latest",
+                        "apikey": ETHERSCAN_API_KEY,
+                    },
+                )
+                resp.raise_for_status()
             except RetryError:
                 log.debug("Retrying Etherscan API")
                 pass
             else:
+                data = resp.json()
+                balance = data["result"]
                 log.debug("Etherscan API GET <- %s", balance)
                 self._quantity = int(balance) * 10**-18
-            finally:
-                await client.close()
-        return await super().quantity()
+        return super().quantity()
 
 
 class Stock(AssetBase):
@@ -136,27 +145,28 @@ class Stock(AssetBase):
         if self._price:
             Stock.PRICES[self.name] = self._price
 
-    async def price(self):
+    def price(self):
         if self.name in Stock.PRICES:
             return Stock.PRICES[self.name]
-        base_url = "https://api.finnhub.io/api/v1"
-        headers = {
-            "Accept": "application/json",
-            "User-Agent": "finnhub/python",
-        }
-        async with aiohttp.ClientSession(headers=headers) as session:
-            params = {"symbol": self.name, "token": FINNHUB_API_KEY}
+        with requests.Session() as session:
             log.debug("Finnhub API -> %s", self.name)
-            async with session.get(f"{base_url}/quote", params=params) as resp:
+            with session.get(
+                "https://api.finnhub.io/api/v1/quote",
+                headers={
+                    "Accept": "application/json",
+                    "User-Agent": "finnhub/python",
+                },
+                params={"symbol": self.name, "token": FINNHUB_API_KEY},
+            ) as resp:
                 try:
-                    jsn = await resp.json()
-                except aiohttp.client_exceptions.ContentTypeError:
-                    log.exception(f"Error: {await resp.text()}")
+                    jsn = resp.json()
+                except requests.exceptions.ContentDecodingError:
+                    log.exception(f"Error: {resp.text}")
                 else:
                     log.debug("Finnhub API <- %s", jsn)
                     self._price = float(jsn["c"])
                     Stock.PRICES[self.name] = self._price
-        return await super().price()
+        return super().price()
 
 
 class Asset:
@@ -164,14 +174,13 @@ class Asset:
     def create(cls, category, name, denomination, group, source, quantity_or_locator, price):
         match category:
             case "cryptocurrency":
-                obj = Crypto(name, denomination, group, source, quantity_or_locator, price)
+                return Crypto(name, denomination, group, source, quantity_or_locator, price)
             case "constant":
-                obj = Constant(name, denomination, group, source, quantity_or_locator, price)
+                return Constant(name, denomination, group, source, quantity_or_locator, price)
             case "stock":
-                obj = Stock(name, denomination, group, source, quantity_or_locator, price)
+                return Stock(name, denomination, group, source, quantity_or_locator, price)
             case _:
                 raise ValueError(f"Unknown asset category {category}")
-        return obj
 
 
 class AssetDetail:
@@ -183,29 +192,23 @@ class AssetDetail:
     def fmt_name(self, indent) -> str:
         return click.style(self.name.rjust(indent), fg=self.assets[0].COLOR, reverse=True)
 
-    async def fmt_price(self) -> str:
-        return click.style(f"${await self.price():,}", fg="bright_blue", bold=True)
+    def fmt_price(self) -> str:
+        return click.style(f"${self.price():,}", fg="bright_blue", bold=True)
 
-    async def fmt_quantity(self) -> str:
-        return f"{await self.quantity():,} {self.denomination}"
+    def fmt_quantity(self) -> str:
+        return f"{self.quantity():,} {self.denomination}"
 
-    async def fmt_value(self, indent) -> str:
-        return f"${await self.value():<{indent},.2f}"
+    def fmt_value(self, indent) -> str:
+        return f"${self.value():<{indent},.2f}"
 
-    async def price(self):
-        return await self.assets[0].price()
+    def price(self):
+        return self.assets[0].price()
 
-    async def quantity(self):
-        total = 0.0
-        for asset in self.assets:
-            total += await asset.quantity()
-        return total
+    def quantity(self):
+        return sum(asset.quantity() for asset in self.assets)
 
-    async def value(self):
-        total = 0.0
-        for asset in self.assets:
-            total += await asset.value()
-        return total
+    def value(self):
+        return sum(asset.value() for asset in self.assets)
 
 
 def get_color_for_sum(value: float) -> str:
@@ -217,20 +220,14 @@ def get_color_for_sum(value: float) -> str:
         return "white"
 
 
-async def execute(loaded_assets: dict, debug: bool, excluded_groups: Tuple[str], group_by: str, verbose: bool):
+def create_assets(loaded_assets: dict):
     asset_objs = []
-    indent = 0
-    for name, asset_meta in loaded_assets.items():
-        if len(name) > indent:
-            indent = len(name)
 
+    for name, asset_meta in loaded_assets.items():
         denomination = asset_meta["denomination"]
         group = asset_meta["group"]
         sources = asset_meta["sources"]
         category = asset_meta["category"]
-
-        if group in excluded_groups:
-            continue
 
         if isinstance(category, dict):
             category_name = category["name"]
@@ -251,15 +248,22 @@ async def execute(loaded_assets: dict, debug: bool, excluded_groups: Tuple[str],
             )
             asset_objs.append(asset)
 
+    return asset_objs
+
+
+def execute(loaded_assets: dict, debug: bool, excluded_groups: Tuple[str], group_by: str, verbose: bool):
+    included_assets = {name: asset_meta for name, asset_meta in loaded_assets.items() if asset_meta["group"] not in excluded_groups}
+    asset_objs = create_assets(included_assets)
+
+    indent = 0
     total_value = 0.0
 
     if debug:
-        for asset in asset_objs:
-            total_value += await asset.value()
+        total_value = sum(asset.value() for asset in asset_objs)
     else:
         with click.progressbar(asset_objs) as progress_bar:
             for asset in progress_bar:
-                total_value += await asset.value()
+                total_value += asset.value()
 
     terminal_size = os.get_terminal_size()
 
@@ -272,26 +276,26 @@ async def execute(loaded_assets: dict, debug: bool, excluded_groups: Tuple[str],
         asset_details = {}
         for name, assets in itertools.groupby(objs, lambda o: o.name):
             detail = AssetDetail(assets)
-            group_value_sum += await detail.value()
+            group_value_sum += detail.value()
             asset_details[name] = {
                 "detail": detail,
-                "value": await detail.value(),
+                "value": detail.value(),
             }
 
         group_allocation_sum = 0.0
         for name, details in sorted(asset_details.items(), key=lambda o: o[1]["value"]):
             detail = details["detail"]
-            portfolio_allocation = (await detail.value() / total_value) * 100
+            portfolio_allocation = (detail.value() / total_value) * 100
             group_allocation_sum += portfolio_allocation
             msg = (
-                f"{detail.fmt_name(indent)}: {await detail.fmt_value(indent)} ({portfolio_allocation:.4f}%) "
-                f"({await detail.fmt_quantity()} @ {await detail.fmt_price()})"
+                f"{detail.fmt_name(indent)}: {detail.fmt_value(indent)} ({portfolio_allocation:.4f}%) "
+                f"({detail.fmt_quantity()} @ {detail.fmt_price()})"
             )
             click.echo(msg)
 
             if verbose:
                 for asset in detail.assets:
-                    click.echo(f"{'':>{indent}}- {asset.source}: {await asset.quantity():,} {asset.denomination}")
+                    click.echo(f"{'':>{indent}}- {asset.source}: {asset.quantity():,} {asset.denomination}")
 
         group_value_sum_str = f"{group_value_sum:<{indent},.2f}"
         click.echo(f"{'':>{indent}}: ${click.style(group_value_sum_str, fg=get_color_for_sum(group_value_sum))} ({group_allocation_sum:.4f}%)")
@@ -348,8 +352,8 @@ def main(debug, edit_assets, excluded_groups, assets_file, group_by, verbose) ->
         log.setLevel(logging.INFO)
 
     assets = yaml.safe_load(assets_file)
-    asyncio.run(execute(assets, debug, excluded_groups, group_by, verbose))
+    return execute(assets, debug, excluded_groups, group_by, verbose)
 
 
 if __name__ == "__main__":
-    main()
+    exit(main())
