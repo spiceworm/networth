@@ -105,30 +105,34 @@ class Crypto(AssetBase):
         if self.address and not self._quantity:
             log.debug("Etherscan API GET -> %s", self.address)
             try:
-                ## Leaving this in so I can add it back once I hit whatever exceptions were being thrown
-                ## when this was implemented using the async etherscan package. Maybe a rate limit error?
-                # for attempt in Retrying(
-                #     retry=retry_if_exception_type(requests.exceptions.RequestException),
-                #     stop=stop_after_attempt(3),
-                # ):
-                #     with attempt:
-                resp = requests.get(
-                    "https://api.etherscan.io/v2/api",
-                    params={
-                        "chainid": "1",
-                        "module": "account",
-                        "action": "balance",
-                        "address": self.address,
-                        "tag": "latest",
-                        "apikey": ETHERSCAN_API_KEY,
-                    },
-                )
-                resp.raise_for_status()
+                for attempt in Retrying(
+                    retry=retry_if_exception_type(requests.exceptions.RequestException),
+                    stop=stop_after_attempt(3),
+                ):
+                    with attempt:
+                        resp = requests.get(
+                            "https://api.etherscan.io/v2/api",
+                            params={
+                                "chainid": "1",
+                                "module": "account",
+                                "action": "balance",
+                                "address": self.address,
+                                "tag": "latest",
+                                "apikey": ETHERSCAN_API_KEY,
+                            },
+                        )
+                        resp.raise_for_status()
+                        data = resp.json()
+
+                        # Response status code is 200 even if we are getting rate limited :( so need to
+                        # take the ugly approach of checking if the rate limit message is present.
+                        if "Max calls per sec rate limit reached" in data["result"]:
+                            log.debug("Etherscan API rate limit error")
+                            raise RetryError("Rate limited")
             except RetryError:
                 log.debug("Retrying Etherscan API")
                 pass
             else:
-                data = resp.json()
                 balance = data["result"]
                 log.debug("Etherscan API GET <- %s", balance)
                 self._quantity = int(balance) * 10**-18
