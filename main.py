@@ -9,7 +9,7 @@ import click
 import decouple
 import pycoingecko
 import requests
-from tenacity import RetryError, Retrying, retry_if_exception_type, stop_after_attempt
+from tenacity import RetryError, Retrying, retry_if_exception_type, stop_after_attempt, wait_fixed
 import yaml
 
 
@@ -27,6 +27,14 @@ log = logging.getLogger()
 
 ETHERSCAN_API_KEY = decouple.config("ETHERSCAN_API_KEY")
 FINNHUB_API_KEY = decouple.config("FINNHUB_API_KEY")
+
+
+class NetworthError(Exception):
+    pass
+
+
+class RateLimitError(NetworthError):
+    pass
 
 
 @functools.total_ordering
@@ -106,8 +114,9 @@ class Crypto(AssetBase):
             log.debug("Etherscan API GET -> %s", self.address)
             try:
                 for attempt in Retrying(
-                    retry=retry_if_exception_type(requests.exceptions.RequestException),
+                    retry=retry_if_exception_type(RateLimitError),
                     stop=stop_after_attempt(3),
+                    wait=wait_fixed(1),
                 ):
                     with attempt:
                         resp = requests.get(
@@ -128,8 +137,8 @@ class Crypto(AssetBase):
                         # take the ugly approach of checking if the rate limit message is present.
                         if "Max calls per sec rate limit reached" in data["result"]:
                             log.debug("Etherscan API rate limit error")
-                            raise RetryError("Rate limited")
-            except RetryError:
+                            raise RateLimitError("Rate limited")
+            except RateLimitError:
                 log.debug("Retrying Etherscan API")
                 pass
             else:
